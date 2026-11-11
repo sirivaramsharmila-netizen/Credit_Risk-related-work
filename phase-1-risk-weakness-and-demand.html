@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit Risk — Phase 1: the weakness map and the demand map · CREDIT lane</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --bg:#f4f2ec;
+    --ink:#15181c;
+    --body:#2b3138;
+    --muted:#697079;
+    --line:#dcdfd8;
+    --line-soft:#e9ebe5;
+    --accent:#1d5c46;
+    --accent-2:#2f7f62;
+    --accent-soft:#e9f1ec;
+    --amber:#8a5a12;
+    --amber-soft:#fdf4e5;
+    --red:#8c2f2f;
+    --red-soft:#fbeeed;
+    --blue:#22456f;
+    --blue-soft:#eaf0f7;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{
+    margin:0;background:var(--bg);color:var(--body);
+    font-family:var(--sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .shell{max-width:1240px;margin:0 auto;padding:0 30px 96px}
+  .layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:54px;align-items:start}
+  .layout > *{min-width:0}
+  main{min-width:0;max-width:100%}
+  @media (max-width:1040px){.layout{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+
+  /* masthead */
+  header.mast{padding:58px 0 30px;border-bottom:1px solid var(--line);margin-bottom:38px}
+  .eyebrow{
+    font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:0 0 18px
+  }
+  h1{
+    font-family:var(--serif);font-weight:600;font-size:clamp(36px,4.6vw,56px);
+    line-height:1.06;letter-spacing:-.018em;color:var(--ink);margin:0 0 20px;max-width:20em
+  }
+  .deck{font-size:19px;line-height:1.55;color:#3c434b;max-width:44em;margin:0 0 26px}
+  .deck strong{color:var(--ink);font-weight:650}
+  .meta{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+    border-top:1px solid var(--line-soft);padding-top:18px;max-width:980px
+  }
+  @media (max-width:780px){.meta{grid-template-columns:repeat(2,1fr);gap:18px}}
+  .meta div{padding-right:18px}
+  .meta dt{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}
+  .meta dd{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+  .meta code{white-space:nowrap}
+
+  /* kpi */
+  .kpi{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:0 0 14px;max-width:980px
+  }
+  .kpi::after{content:"";display:none;background:var(--paper)}
+  .kpi div{background:var(--paper);padding:14px 16px}
+  @media (max-width:780px){.kpi{grid-template-columns:repeat(2,1fr)}.kpi::after{display:block}}
+  .kpi .kv{font-family:var(--serif);font-size:25px;line-height:1.05;color:var(--ink);display:block;margin-bottom:3px}
+  .kpi .kl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .seal{font-size:12.5px;color:var(--amber);max-width:64em;margin:0 0 34px}
+  .seal span{color:var(--muted)}
+  .deck code{background:#eceae3;font-size:.86em}
+  .seal b{letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}
+
+  /* toc */
+  .toc{position:sticky;top:26px;padding-top:8px;font-size:13px}
+  .toc .toc-h{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .toc ol{list-style:none;margin:0;padding:0}
+  .toc li{margin:0 0 2px}
+  .toc a{
+    display:block;color:#414850;text-decoration:none;padding:5px 8px 5px 10px;
+    border-left:2px solid transparent;line-height:1.35
+  }
+  .toc a:hover{color:var(--accent);background:#efeee7;border-left-color:var(--accent-2)}
+  .toc .n{color:#9aa1a8;font-family:var(--mono);font-size:10.5px;margin-right:7px}
+
+  /* sections */
+  section{margin:0 0 58px;scroll-margin-top:22px}
+  .sec-kicker{
+    font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin:0 0 6px
+  }
+  h2{
+    font-family:var(--serif);font-size:33px;line-height:1.13;letter-spacing:-.012em;
+    color:var(--ink);font-weight:600;margin:0 0 20px;padding-bottom:14px;
+    border-bottom:1px solid var(--line)
+  }
+  h3{
+    font-family:var(--serif);font-size:21px;line-height:1.28;color:var(--ink);
+    font-weight:600;margin:34px 0 10px
+  }
+  h3.step-h{
+    display:flex;align-items:baseline;gap:12px;
+    background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:28px 0 12px
+  }
+  .step-badge{
+    font-family:var(--mono);font-size:11.5px;color:var(--accent);background:var(--accent-soft);
+    border:1px solid #cfe0d5;padding:2px 6px;white-space:nowrap
+  }
+  p{margin:0 0 14px;max-width:48em}
+  ul,ol{margin:0 0 14px;padding-left:22px;max-width:48em}
+  li{margin:0 0 7px}
+  li::marker{color:#9aa1a8}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(29,92,70,.25)}
+  a:hover{border-bottom-color:var(--accent)}
+  code{font-family:var(--mono);font-size:.875em;background:#f0efe9;padding:1px 5px;border-radius:3px;color:#333a41}
+  strong{color:var(--ink)}
+  hr{border:none;border-top:1px solid var(--line);margin:0 0 34px}
+
+  /* callouts */
+  blockquote{
+    margin:24px 0;padding:17px 20px;background:var(--paper);
+    border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:2px
+  }
+  blockquote p{margin:0 0 8px;max-width:48em}
+  blockquote p:last-child{margin-bottom:0}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;max-width:100%;margin:0 0 24px;border:1px solid var(--line);background:var(--paper)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.46}
+  th{
+    text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#5a626a;
+    font-weight:650;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:bottom;
+    background:#fbfaf7
+  }
+  td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fbfaf7}
+  td code{white-space:normal;overflow-wrap:break-word}
+  @media (max-width:700px){
+    .tbl-wrap{border:none;background:transparent;overflow:visible}
+    .tbl-wrap table{display:block;width:100%}
+    .tbl-wrap thead{display:none}
+    .tbl-wrap tbody{display:block}
+    .tbl-wrap tr{display:block;border:1px solid var(--line);background:var(--paper);margin:0 0 10px}
+    .tbl-wrap td{display:block;padding:8px 13px;border-bottom:1px solid var(--line-soft);width:auto;text-align:left !important}
+    .tbl-wrap tr td:last-child{border-bottom:none}
+    .tbl-wrap td::before{
+      content:attr(data-label);display:block;font-size:9.5px;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--muted);font-weight:650;line-height:1.5;margin:0 0 3px
+    }
+    .tbl-wrap td[data-label=""]::before{display:none}
+    .tbl-wrap td code{white-space:normal}
+    .pill{white-space:normal}
+  }
+
+  /* code */
+  pre{
+    background:#151a1e;color:#dfe5e2;padding:16px 18px;border-radius:3px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:0 0 20px
+  }
+  pre code{background:none;color:inherit;padding:0;font-size:inherit;white-space:pre}
+
+  /* pills */
+  .pill{
+    display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;padding:3px 7px;border-radius:2px;white-space:nowrap;
+    border:1px solid transparent;line-height:1.25
+  }
+  .pill.done{background:#e6f0e9;color:#1b5a43;border-color:#cfe0d5}
+  .pill.open{background:var(--amber-soft);color:#7d5210;border-color:#eedcb9}
+  .pill.stop{background:var(--red-soft);color:#7f2b2b;border-color:#eccfcd}
+  .pill.info{background:var(--blue-soft);color:var(--blue);border-color:#d3dfec}
+
+  /* footer */
+  .footer{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;font-size:12.5px;color:var(--muted);max-width:64em}
+  .footer p{max-width:64em}
+  .up{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9aa1a8;margin-top:14px}
+
+  @media print{
+    body{background:#fff;font-size:10.5pt}
+    .shell{max-width:none;padding:0}
+    .layout{display:block}
+    .toc{display:none}
+    header.mast{padding-top:0}
+    section{page-break-inside:auto;margin-bottom:30px}
+    blockquote,.tbl-wrap,h3.step-h{page-break-inside:avoid}
+    h2,h3{page-break-after:avoid}
+    a{color:var(--ink);border-bottom:none}
+    pre{background:#f4f4ef;color:#222;border:1px solid #ddd;white-space:pre-wrap}
+    .tbl-wrap{overflow:visible;page-break-inside:avoid}
+    table{font-size:9pt}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="mast">
+  <p class="eyebrow">AITIUM INC · CREDIT lane · Model 2 · Phase 1 of 6 — weakness and demand</p>
+  <h1>Credit Risk — Phase 1: the weakness map and the demand map</h1>
+  <p class="deck">Where the model loses points a buyer would pay to recover, what a buyer would actually accept, and the measurement that would prove either. Nine weakness rows, five buyer archetypes, nine acceptance criteria — and an empty base column, honestly marked.</p>
+  <dl class="meta">
+    <div><dt>Phase</dt><dd>1 — weakness + demand map</dd></div>
+    <div><dt>Owner</dt><dd>Sharmila Sirivaram<br>CREDIT lane</dd></div>
+    <div><dt>Registration</dt><dd><code>CREDIT-RISK-P0-PREREG-001</code><br>frozen 2026-11-11</dd></div>
+    <div><dt>Issue</dt><dd>2026-11-11<br>packet rev. 1 · mirrors the .md</dd></div>
+  </dl>
+</header>
+
+<div class="kpi">
+  <div><span class="kv">9</span><span class="kl">Weakness rows</span></div>
+  <div><span class="kv">2</span><span class="kl">Measured on data</span></div>
+  <div><span class="kv">0.046</span><span class="kl">AUC lost without PAY_*</span></div>
+  <div><span class="kv">0.016</span><span class="kl">MDE · recall @ 10 %</span></div>
+  <div><span class="kv">2 / 9</span><span class="kl">Acceptance criteria unmeasurable</span></div>
+</div>
+<p class="seal"><span>Base row: UNMEASURED</span> <b>Phase 1:</b> the weakness map is a priced hypothesis set with a
+measured reference column; five commissions stand between it and a verdict.</p>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-h">Contents</p>
+    <div class="toc">
+<ul>
+<li><a href="#phase-1-weakness-map-and-demand-map">Phase 1 — Weakness map and demand map</a><ul>
+<li><a href="#0-read-this-first">0. Read this first</a></li>
+<li><a href="#1-the-rule-this-phase-runs-on">1. The rule this phase runs on</a></li>
+<li><a href="#2-what-the-reference-model-is-and-why-it-is-allowed-to-stand-in">2. What the reference model is, and why it is allowed to stand in</a></li>
+<li><a href="#3-the-weakness-map">3. The weakness map</a></li>
+<li><a href="#4-the-measured-evidence">4. The measured evidence</a></li>
+<li><a href="#5-the-demand-map-what-a-paying-customers-bar-actually-is">5. The demand map — what a paying customer's bar actually is</a></li>
+<li><a href="#6-where-small-models-fail-the-hypotheses-and-the-test-that-would-prove-each">6. Where small models fail — the hypotheses, and the test that would prove each</a></li>
+<li><a href="#7-what-not-to-train-the-strengths-named-before-phase-2">7. What not to train — the strengths, named before Phase 2</a></li>
+<li><a href="#8-what-phase-1-hands-to-phase-2">8. What Phase 1 hands to Phase 2</a></li>
+<li><a href="#9-decision-rows">9. Decision rows</a></li>
+<li><a href="#10-commissions-the-measurements-that-would-end-the-unmeasured-rows">10. Commissions — the measurements that would end the UNMEASURED rows</a></li>
+<li><a href="#11-blockers">11. Blockers</a></li>
+<li><a href="#12-receipts-and-reproduction">12. Receipts and reproduction</a></li>
+<li><a href="#13-recipe-conformance">13. Recipe conformance</a></li>
+<li><a href="#14-revision-history">14. Revision history</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+<h1 id="phase-1-weakness-map-and-demand-map">Phase 1 — Weakness map and demand map</h1>
+<p><strong>Lane:</strong> CREDIT · <strong>Model:</strong> 2 — Credit Risk · <strong>Phase:</strong> 1 of 6
+<strong>Revision:</strong> 1 · <strong>Date:</strong> 11 November 2026 · <strong>Author:</strong> Sharmila Sirivaram
+<strong>Registration:</strong> <code>CREDIT-RISK-P0-PREREG-001</code> (frozen 2026-11-11) · <strong>Evidence:</strong> <code>phase1-risk/out/</code>
+<strong>Harness:</strong> <a href="phase1-risk/"><code>phase1-risk/</code></a> — <code>weakness.py</code> · <code>intervals.py</code>
+<strong>Status:</strong> base <strong>UNMEASURED</strong>. Every weakness row below is either measured on the <strong>reference model</strong>,
+sourced from <strong>public literature</strong>, or marked <strong>UNMEASURED</strong> with a commission. None is a claim about a
+model that has not been run.</p>
+<blockquote>
+<p><strong>The one sentence.</strong> Phase 1 does not invent weaknesses; it names them, prices each one in the
+smallest difference that would count as real, and attaches the measurement that would prove it —
+and on this lane the base is unmeasured, so the honest map has an empty base column, a measured
+reference column, and a commission register where the claim would go.</p>
+</blockquote>
+<hr />
+<h2 id="0-read-this-first">0. Read this first</h2>
+<p><strong>What Phase 1 is for.</strong> Phase 0 fixed what to measure. Phase 1 answers two questions: <em>where does the
+model lose points that a buyer would pay to recover</em>, and <em>what would that buyer actually accept?</em> The
+first is the weakness map; the second is the demand map. Together they decide what Phase 2 sources
+data <strong>for</strong> — because a mixture built around what the model already does well buys a few points near
+a ceiling and is named maintenance, not mission.</p>
+<p><strong>What this packet cannot say.</strong> It cannot say "the base is weak at calibration". The base has never
+been scored. Any sentence of that form in this document carries an <strong>UNMEASURED</strong> mark and a
+commission number. What it <em>can</em> do — and does — is measure the ground the base will stand on: the
+reference model's errors, the segment where the task is hardest, the interval around every difference,
+and the acceptance tests a paying customer would run.</p>
+<p><strong>The two maps, in one line each.</strong></p>
+<ul>
+<li><strong>Weakness map:</strong> nine rows, of which <strong>two</strong> are measured weaknesses on Taiwan, <strong>three</strong> are
+  structural findings (they describe the data, not the model), <strong>one</strong> is a measured non-weakness, and
+  <strong>three</strong> are unmeasurable today and commissioned.</li>
+<li><strong>Demand map:</strong> five buyer archetypes, <strong>eight</strong> acceptance criteria, of which <strong>six</strong> can be
+  measured on corpora we hold and <strong>two cannot</strong> — explanation and out-of-time stability. Those two
+  are the difference between a model and a product a regulated buyer can sign for.</li>
+</ul>
+<hr />
+<h2 id="1-the-rule-this-phase-runs-on">1. The rule this phase runs on</h2>
+<p>The Recipe's Phase 1 text is unambiguous:</p>
+<blockquote>
+<p><em>Per benchmark: base score, why points are lost, the smallest improvement that counts as real
+(per-benchmark MDE), and the stretch target… Every claimed weakness needs a measured base number
+behind it, or an UNMEASURED mark and a measurement commissioned.</em></p>
+</blockquote>
+<p>So every row in §3 carries three things: the <strong>evidence class</strong>, the <strong>measured number</strong> it rests on,
+and the <strong>MDE</strong> — the smallest improvement that is distinguishable from noise on that benchmark. A
+weakness without all three is not a weakness; it is a hypothesis with a test attached, and it is
+labelled as one.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Evidence class</th>
+<th>What it means</th>
+<th>Where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Evidence class"><strong>A — measured here</strong></td>
+<td data-label="What it means">produced on the frozen folds by a script in <code>phase1-risk/</code></td>
+<td data-label="Where it comes from"><code>out/weakness.json</code>, <code>out/intervals.json</code></td>
+</tr>
+<tr>
+<td data-label="Evidence class"><strong>B — public literature / benchmark</strong></td>
+<td data-label="What it means">someone else's measurement, cited and labelled</td>
+<td data-label="Where it comes from">§7, §5</td>
+</tr>
+<tr>
+<td data-label="Evidence class"><strong>C — UNMEASURED, commissioned</strong></td>
+<td data-label="What it means">no measurement exists; a test is named and priced</td>
+<td data-label="Where it comes from">§10</td>
+</tr>
+</tbody>
+</table></div>
+<p>The base's own row is class <strong>C</strong> in every table. That is not a placeholder: it is the honest state,
+and <code>CM-R1</code> is the commission that ends it.</p>
+<hr />
+<h2 id="2-what-the-reference-model-is-and-why-it-is-allowed-to-stand-in">2. What the reference model is, and why it is allowed to stand in</h2>
+<p>The reference is the gradient-boosted control from Phase 0: <code>HistGradientBoostingClassifier</code>, seed
+20261111, 300 iterations, fitted inside the frozen folds, scored <strong>out-of-fold</strong> so no row is scored
+by a model that saw it. It is not a contender and it is not the base. It is the <strong>floor of what the
+job can be done with</strong>, and its error structure is the best available proxy for where any model —
+including a 4 B decoder — will lose points.</p>
+<p>Why that proxy is legitimate for Phase 1 and not for a verdict: Phase 1 is asking <em>where the task is
+hard</em>, not <em>how good our model is</em>. The task's difficulty is a property of the data. When Phase 6
+asks how good the base is, the reference becomes the bar and the proxy stops being a substitute.</p>
+<p><strong>One caution, stated before the numbers are read.</strong> The reference sees 23 clean numeric fields and
+uses them well. A language model sees the same fields serialised as text. A weakness that is
+"structural for the task" (thin-file, imbalance, missingness) transfers; a weakness that is
+"structural for trees" (splits on thresholds) may not. §7 separates the two.</p>
+<hr />
+<h2 id="3-the-weakness-map">3. The weakness map</h2>
+<p>Nine rows. The <strong>MDE</strong> column is the smallest change on that metric that reaches 80 % power against
+another model — not against a fixed floor. <code>CM-x</code> is the commission (§10) that would turn a class-C
+row into class A.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Weakness</th>
+<th>Benchmark</th>
+<th>Base</th>
+<th>Reference (measured)</th>
+<th>MDE (vs a model)</th>
+<th>Smallest real improvement</th>
+<th>Stretch</th>
+<th>Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>W1</strong></td>
+<td data-label="Weakness">Discrimination in the <strong>thin-file</strong> (low-limit) segment</td>
+<td data-label="Benchmark">Taiwan, lane protocol</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">AUC <strong>0.7514</strong> [0.7386, 0.7634] vs <strong>0.7730</strong> [0.7648, 0.7810] in the rest</td>
+<td data-label="MDE (vs a model)"><strong>0.025</strong> AUC</td>
+<td data-label="Smallest real improvement">+0.025 AUC in segment</td>
+<td data-label="Stretch">+0.04</td>
+<td data-label="Class"><strong>A</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>W2</strong></td>
+<td data-label="Weakness">Defaults missed at a <strong>staffable decline rate</strong></td>
+<td data-label="Benchmark">Taiwan</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">10 % decline catches <strong>2,093 of 6,636</strong> (31.5 %), misses <strong>4,543</strong></td>
+<td data-label="MDE (vs a model)"><strong>0.016</strong> recall</td>
+<td data-label="Smallest real improvement">+0.02 recall @ 10 %</td>
+<td data-label="Stretch">+0.05</td>
+<td data-label="Class"><strong>A</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>W3</strong></td>
+<td data-label="Weakness">Calibration <strong>in the upper band</strong></td>
+<td data-label="Benchmark">German + Taiwan</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">Taiwan max decile gap <strong>3.3 pts</strong>; German decile 8 <strong>+8.1 pts</strong> and decile 10 <strong>−8.7 pts</strong> on 100-row bins</td>
+<td data-label="MDE (vs a model)"><strong>0.005</strong> Brier</td>
+<td data-label="Smallest real improvement">no gap &gt; 3 pts on ≥ 1,000 rows</td>
+<td data-label="Stretch">slope 1.0 ± 0.1</td>
+<td data-label="Class"><strong>A</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>W4</strong></td>
+<td data-label="Weakness">The score <strong>rests on repayment status</strong></td>
+<td data-label="Benchmark">Taiwan</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">ablating <code>PAY_*</code> drops AUC <strong>0.786 → 0.740</strong> (−0.046) and recall@10 % <strong>0.319 → 0.259</strong></td>
+<td data-label="MDE (vs a model)">0.014 AUC</td>
+<td data-label="Smallest real improvement">not trainable — scope the product</td>
+<td data-label="Stretch">—</td>
+<td data-label="Class"><strong>A</strong> (structural)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>W5</strong></td>
+<td data-label="Weakness"><strong>Missing-data</strong> robustness</td>
+<td data-label="Benchmark">Polish bankruptcy (4.8 %, 41,322 missing)</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">none of the two headline corpora has a single null — the test does not exist yet</td>
+<td data-label="MDE (vs a model)">TBD</td>
+<td data-label="Smallest real improvement">AUC loss &lt; MDE at 10 % MCAR</td>
+<td data-label="Stretch">&lt; MDE at 30 % MCAR</td>
+<td data-label="Class"><strong>C</strong> (<code>CM-R2</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>W6</strong></td>
+<td data-label="Weakness"><strong>Explanation</strong> fidelity (adverse action)</td>
+<td data-label="Benchmark">FICO HELOC xML</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">no measurement possible: licence unproven, protocol not reproduced</td>
+<td data-label="MDE (vs a model)">—</td>
+<td data-label="Smallest real improvement">3 faithful codes per decline</td>
+<td data-label="Stretch">—</td>
+<td data-label="Class"><strong>C</strong> (<code>CM-R3</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>W7</strong></td>
+<td data-label="Weakness"><strong>Fair-lending</strong> evidence</td>
+<td data-label="Benchmark">German + Taiwan</td>
+<td data-label="Base">UNMEASURED (diagnostic only)</td>
+<td data-label="Reference (measured)">sex AIR <strong>0.818</strong> (passes 4/5ths); age AIR <strong>0.747</strong> (fails) at the 10 % cut</td>
+<td data-label="MDE (vs a model)">—</td>
+<td data-label="Smallest real improvement">AIR ≥ 0.80 with reasons</td>
+<td data-label="Stretch">≥ 0.90</td>
+<td data-label="Class"><strong>A</strong> (diagnostic)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>W8</strong></td>
+<td data-label="Weakness"><strong>Out-of-time stability</strong></td>
+<td data-label="Benchmark">none held</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">neither corpus has a usable time axis: Taiwan is one 2005 window, German 1973–75</td>
+<td data-label="MDE (vs a model)">—</td>
+<td data-label="Smallest real improvement">PSI ≤ 0.10</td>
+<td data-label="Stretch">≤ 0.05</td>
+<td data-label="Class"><strong>C</strong> (<code>CM-R5</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>W9</strong></td>
+<td data-label="Weakness">The base's <strong>whole battery</strong></td>
+<td data-label="Benchmark">both</td>
+<td data-label="Base">UNMEASURED</td>
+<td data-label="Reference (measured)">—</td>
+<td data-label="MDE (vs a model)">per Phase 0 §6</td>
+<td data-label="Smallest real improvement">clear G1–G4</td>
+<td data-label="Stretch">beat reference by MDE</td>
+<td data-label="Class"><strong>C</strong> (<code>CM-R1</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Read the table as a whole, not row by row.</strong> Two rows (W1, W2) are measured weaknesses of the
+<em>task</em> — places where a model that is good overall still loses the cases a lender cares about. Two
+(W4, W8) are structural: no amount of training fixes a model whose signal is repayment status, and no
+model can demonstrate stability on a corpus that has no time. Three (W5, W6, W8) cannot be measured on
+what we hold. And one (W3) is a measured <strong>non-weakness</strong>: on 30,000 rows the reference's calibration
+holds to within 3.3 points, which is the honest version of "we thought calibration would be bad".</p>
+<hr />
+<h2 id="4-the-measured-evidence">4. The measured evidence</h2>
+<p>All figures are out-of-fold on the frozen Phase 0 splits; bootstrap 1,000 resamples, seed 20261111.
+Receipts: <a href="phase1-risk/out/weakness.json"><code>phase1-risk/out/weakness.json</code></a>,
+<a href="phase1-risk/out/intervals.json"><code>intervals.json</code></a>.</p>
+<h3 id="41-where-the-defaults-are-missed">4.1 Where the defaults are missed</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Decline rate</th>
+<th style="text-align: right;">Rows declined</th>
+<th style="text-align: right;">Defaults caught</th>
+<th style="text-align: right;">Defaults missed</th>
+<th style="text-align: right;">Recall</th>
+<th style="text-align: right;">Precision</th>
+<th style="text-align: right;">Lift</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Decline rate">5 %</td>
+<td style="text-align: right;" data-label="Rows declined">1,500</td>
+<td style="text-align: right;" data-label="Defaults caught">1,136</td>
+<td style="text-align: right;" data-label="Defaults missed">5,500</td>
+<td style="text-align: right;" data-label="Recall">0.171</td>
+<td style="text-align: right;" data-label="Precision">0.757</td>
+<td style="text-align: right;" data-label="Lift">3.42×</td>
+</tr>
+<tr>
+<td data-label="Decline rate"><strong>10 %</strong></td>
+<td style="text-align: right;" data-label="Rows declined"><strong>3,000</strong></td>
+<td style="text-align: right;" data-label="Defaults caught"><strong>2,093</strong></td>
+<td style="text-align: right;" data-label="Defaults missed"><strong>4,543</strong></td>
+<td style="text-align: right;" data-label="Recall"><strong>0.315</strong></td>
+<td style="text-align: right;" data-label="Precision"><strong>0.698</strong></td>
+<td style="text-align: right;" data-label="Lift"><strong>3.15×</strong></td>
+</tr>
+<tr>
+<td data-label="Decline rate">20 %</td>
+<td style="text-align: right;" data-label="Rows declined">6,000</td>
+<td style="text-align: right;" data-label="Defaults caught">3,386</td>
+<td style="text-align: right;" data-label="Defaults missed">3,250</td>
+<td style="text-align: right;" data-label="Recall">0.510</td>
+<td style="text-align: right;" data-label="Precision">0.564</td>
+<td style="text-align: right;" data-label="Lift">2.55×</td>
+</tr>
+<tr>
+<td data-label="Decline rate">30 %</td>
+<td style="text-align: right;" data-label="Rows declined">9,000</td>
+<td style="text-align: right;" data-label="Defaults caught">4,187</td>
+<td style="text-align: right;" data-label="Defaults missed">2,449</td>
+<td style="text-align: right;" data-label="Recall">0.631</td>
+<td style="text-align: right;" data-label="Precision">0.465</td>
+<td style="text-align: right;" data-label="Lift">2.10×</td>
+</tr>
+</tbody>
+</table></div>
+<p>Taiwan, n = 30,000, 6,636 defaults. German is the same shape at a tenth of the size: 10 % decline
+catches 80 of 300 (0.267), misses 220.</p>
+<p><strong>Why this is a weakness and not a score.</strong> At a 10 % decline the model catches roughly one default in
+three. The other two are approved and then default. That is the operating reality of consumer credit —
+but it is also the row where a point of recall is worth more than a point of AUC, because the lender
+pays the loss, not the statistician. The interval is tight on Taiwan: <strong>0.3154 [0.3080, 0.3229]</strong>, SE 0.0039.</p>
+<h3 id="42-the-segment-where-it-is-hardest">4.2 The segment where it is hardest</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Segment (credit limit)</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">defaults</th>
+<th style="text-align: right;">default rate</th>
+<th style="text-align: right;">AUC</th>
+<th style="text-align: right;">Recall @ 10 % decline</th>
+<th style="text-align: right;">Mean predicted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Segment (credit limit)"><strong>≤ 50k</strong></td>
+<td style="text-align: right;" data-label="n">7,676</td>
+<td style="text-align: right;" data-label="defaults">2,440</td>
+<td style="text-align: right;" data-label="default rate">31.8 %</td>
+<td style="text-align: right;" data-label="AUC"><strong>0.7514</strong></td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline"><strong>0.227</strong></td>
+<td style="text-align: right;" data-label="Mean predicted">0.311</td>
+</tr>
+<tr>
+<td data-label="Segment (credit limit)">50k–140k</td>
+<td style="text-align: right;" data-label="n">7,614</td>
+<td style="text-align: right;" data-label="defaults">1,882</td>
+<td style="text-align: right;" data-label="default rate">24.7 %</td>
+<td style="text-align: right;" data-label="AUC">0.7764</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.299</td>
+<td style="text-align: right;" data-label="Mean predicted">0.246</td>
+</tr>
+<tr>
+<td data-label="Segment (credit limit)">140k–300k</td>
+<td style="text-align: right;" data-label="n">10,147</td>
+<td style="text-align: right;" data-label="defaults">1,709</td>
+<td style="text-align: right;" data-label="default rate">16.8 %</td>
+<td style="text-align: right;" data-label="AUC">0.7515</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.335</td>
+<td style="text-align: right;" data-label="Mean predicted">0.176</td>
+</tr>
+<tr>
+<td data-label="Segment (credit limit)">&gt; 300k</td>
+<td style="text-align: right;" data-label="n">4,563</td>
+<td style="text-align: right;" data-label="defaults">605</td>
+<td style="text-align: right;" data-label="default rate">13.3 %</td>
+<td style="text-align: right;" data-label="AUC">0.7701</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline"><strong>0.388</strong></td>
+<td style="text-align: right;" data-label="Mean predicted">0.140</td>
+</tr>
+</tbody>
+</table></div>
+<p>The low-limit segment holds <strong>37 % of all defaults</strong> and the model is weakest exactly there: AUC
+0.751 against 0.773 elsewhere, and within-segment recall of 0.227 against 0.388 in the highest band.
+The two intervals do not overlap (0.7386–0.7634 vs 0.7648–0.7810), so this is a real gap and not a
+binning artefact.</p>
+<p>German shows the same pattern by age rather than limit: the 19–30 band scores AUC <strong>0.736</strong> against
+<strong>0.783</strong> (31–45) and <strong>0.788</strong> (46+) — the young, thin-file applicant is the hard case in both
+corpora, which is a property of credit data rather than of one dataset.</p>
+<h3 id="43-what-the-score-actually-rests-on">4.3 What the score actually rests on</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Feature removed (permuted)</th>
+<th style="text-align: right;">AUC drop</th>
+<th style="text-align: right;">SD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Feature removed (permuted)"><code>PAY_0</code> (September repayment status)</td>
+<td style="text-align: right;" data-label="AUC drop"><strong>0.0779</strong></td>
+<td style="text-align: right;" data-label="SD">0.0029</td>
+</tr>
+<tr>
+<td data-label="Feature removed (permuted)"><code>LIMIT_BAL</code></td>
+<td style="text-align: right;" data-label="AUC drop">0.0224</td>
+<td style="text-align: right;" data-label="SD">0.0027</td>
+</tr>
+<tr>
+<td data-label="Feature removed (permuted)"><code>BILL_AMT1</code></td>
+<td style="text-align: right;" data-label="AUC drop">0.0181</td>
+<td style="text-align: right;" data-label="SD">0.0011</td>
+</tr>
+<tr>
+<td data-label="Feature removed (permuted)"><code>PAY_AMT1</code></td>
+<td style="text-align: right;" data-label="AUC drop">0.0090</td>
+<td style="text-align: right;" data-label="SD">0.0017</td>
+</tr>
+<tr>
+<td data-label="Feature removed (permuted)"><code>AGE</code></td>
+<td style="text-align: right;" data-label="AUC drop">0.0011</td>
+<td style="text-align: right;" data-label="SD">0.0006</td>
+</tr>
+</tbody>
+</table></div>
+<p>And the ablation, which is the finding that matters for product scope:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: right;">Features</th>
+<th style="text-align: right;">AUC</th>
+<th style="text-align: right;">PR-AUC</th>
+<th style="text-align: right;">Recall @ 10 %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Model">Full</td>
+<td style="text-align: right;" data-label="Features">23</td>
+<td style="text-align: right;" data-label="AUC"><strong>0.786</strong></td>
+<td style="text-align: right;" data-label="PR-AUC">0.567</td>
+<td style="text-align: right;" data-label="Recall @ 10 %">0.319</td>
+</tr>
+<tr>
+<td data-label="Model"><strong>Without <code>PAY_*</code> repayment status</strong></td>
+<td style="text-align: right;" data-label="Features">17</td>
+<td style="text-align: right;" data-label="AUC"><strong>0.740</strong></td>
+<td style="text-align: right;" data-label="PR-AUC">0.463</td>
+<td style="text-align: right;" data-label="Recall @ 10 %"><strong>0.259</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Removing seven repayment-status fields costs <strong>0.046 AUC</strong> and <strong>6 points of recall</strong>. The model is a
+repayment-status model. That is not a defect to train away — it is a fact about which lender can use
+it: one with bureau data, or one whose applicants have a repayment history. A lender underwriting
+first-time borrowers is a different product, and this lane has no data for it.</p>
+<h3 id="44-calibration-by-band-the-measured-non-weakness">4.4 Calibration by band — the measured non-weakness</h3>
+<p>Taiwan, tenths of the score distribution:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Decile</th>
+<th style="text-align: right;">1</th>
+<th style="text-align: right;">2</th>
+<th style="text-align: right;">3</th>
+<th style="text-align: right;">4</th>
+<th style="text-align: right;">5</th>
+<th style="text-align: right;">6</th>
+<th style="text-align: right;">7</th>
+<th style="text-align: right;">8</th>
+<th style="text-align: right;">9</th>
+<th style="text-align: right;">10</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Decile">Predicted</td>
+<td style="text-align: right;" data-label="1">0.044</td>
+<td style="text-align: right;" data-label="2">0.074</td>
+<td style="text-align: right;" data-label="3">0.098</td>
+<td style="text-align: right;" data-label="4">0.121</td>
+<td style="text-align: right;" data-label="5">0.146</td>
+<td style="text-align: right;" data-label="6">0.174</td>
+<td style="text-align: right;" data-label="7">0.212</td>
+<td style="text-align: right;" data-label="8">0.278</td>
+<td style="text-align: right;" data-label="9">0.413</td>
+<td style="text-align: right;" data-label="10">0.667</td>
+</tr>
+<tr>
+<td data-label="Decile">Observed</td>
+<td style="text-align: right;" data-label="1">0.048</td>
+<td style="text-align: right;" data-label="2">0.072</td>
+<td style="text-align: right;" data-label="3">0.090</td>
+<td style="text-align: right;" data-label="4">0.119</td>
+<td style="text-align: right;" data-label="5">0.139</td>
+<td style="text-align: right;" data-label="6">0.171</td>
+<td style="text-align: right;" data-label="7">0.179</td>
+<td style="text-align: right;" data-label="8">0.267</td>
+<td style="text-align: right;" data-label="9">0.431</td>
+<td style="text-align: right;" data-label="10">0.698</td>
+</tr>
+<tr>
+<td data-label="Decile">Gap (pts)</td>
+<td style="text-align: right;" data-label="1">−0.4</td>
+<td style="text-align: right;" data-label="2">+0.2</td>
+<td style="text-align: right;" data-label="3">+0.8</td>
+<td style="text-align: right;" data-label="4">+0.2</td>
+<td style="text-align: right;" data-label="5">+0.7</td>
+<td style="text-align: right;" data-label="6">+0.4</td>
+<td style="text-align: right;" data-label="7"><strong>+3.3</strong></td>
+<td style="text-align: right;" data-label="8">+1.1</td>
+<td style="text-align: right;" data-label="9">−1.8</td>
+<td style="text-align: right;" data-label="10">−3.1</td>
+</tr>
+</tbody>
+</table></div>
+<p>No gap exceeds 3.3 points on bins of 3,000. On German the same table shows ±8 points, but on bins of
+100 rows that is sampling noise, not miscalibration — which is exactly why the German calibration row
+is reported with its interval and not as a finding.</p>
+<h3 id="45-the-fairness-diagnostic-with-its-limits-stated">4.5 The fairness diagnostic, with its limits stated</h3>
+<p>At a global 10 % decline cut, by sex: male 11.24 % declined (default rate 24.2 %), female 9.19 %
+(20.8 %) → <strong>disparate-impact ratio 0.818</strong>, which clears the conventional 4/5ths screen. By age band:
+31–45 8.84 %, 21–30 10.73 %, 46+ 11.84 % → <strong>AIR 0.747</strong>, which <strong>fails</strong> the same screen.</p>
+<p>This is a diagnostic, not a verdict, and the packet says why: the decline rates track the base rates
+(46+ defaults at 25.2 %, 31–45 at 20.9 %), the corpus is one Taiwanese card portfolio from 2005, and
+the ratio is computed on a <em>policy</em> (decline the riskiest 10 %) rather than on a legally defined
+protected class. It is enough to put fair-lending evidence on the Phase 2 list; it is not enough to
+claim the model is or is not discriminatory.</p>
+<hr />
+<h2 id="5-the-demand-map-what-a-paying-customers-bar-actually-is">5. The demand map — what a paying customer's bar actually is</h2>
+<p>A buyer of a credit-risk score does not buy AUC. They buy a <strong>decision they can defend</strong> to three
+audiences at once: their credit committee, their regulator, and a declined applicant.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Buyer</th>
+<th>What they are buying</th>
+<th>What they will actually test</th>
+<th>What that maps to here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Buyer"><strong>Digital lender / BNPL</strong></td>
+<td data-label="What they are buying">a decision in milliseconds at application</td>
+<td data-label="What they will actually test">AUC on their own holdout; recall at the decline rate they can afford; a latency budget</td>
+<td data-label="What that maps to here">W1, W2, R6</td>
+</tr>
+<tr>
+<td data-label="Buyer"><strong>Bank model risk (IRB-style)</strong></td>
+<td data-label="What they are buying">a PD they can put in a capital calculation</td>
+<td data-label="What they will actually test">calibration slope and Brier; use test; validation evidence; documentation</td>
+<td data-label="What that maps to here">W3, W8, §5.1 A3/A6</td>
+</tr>
+<tr>
+<td data-label="Buyer"><strong>Risk operations</strong></td>
+<td data-label="What they are buying">an alert queue that is staffable</td>
+<td data-label="What they will actually test">precision at the operating point; stability week to week</td>
+<td data-label="What that maps to here">W2, W8</td>
+</tr>
+<tr>
+<td data-label="Buyer"><strong>Compliance / legal</strong></td>
+<td data-label="What they are buying">a decline that survives an appeal</td>
+<td data-label="What they will actually test">reason codes on every decline; fair-lending evidence; licence provenance</td>
+<td data-label="What that maps to here">W6, W7</td>
+</tr>
+<tr>
+<td data-label="Buyer"><strong>Platform / reseller</strong></td>
+<td data-label="What they are buying">something they can version and audit</td>
+<td data-label="What they will actually test">reproducible scores, pinned revisions, provenance receipts</td>
+<td data-label="What that maps to here">§5.1 A8</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="51-the-bar-as-acceptance-criteria">5.1 The bar, as acceptance criteria</h3>
+<p>Numbers below are <strong>proposed thresholds</strong>, assembled from four sources: regulatory requirement, industry
+convention, the public leaderboard, and this lane's own MDEs. They are the owner's to confirm (D-R7),
+and the <em>source class</em> column says how much weight each one carries.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Criterion</th>
+<th>Proposed threshold</th>
+<th>Source class</th>
+<th>Our proxy</th>
+<th>State today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>A1</strong></td>
+<td data-label="Criterion">Discrimination</td>
+<td data-label="Proposed threshold">ROC-AUC ≥ 0.75 on the buyer's own holdout</td>
+<td data-label="Source class">convention + MDE</td>
+<td data-label="Our proxy">Taiwan holdout, n = 6,000</td>
+<td data-label="State today">reference <strong>0.785</strong>; base UNMEASURED</td>
+</tr>
+<tr>
+<td data-label="#"><strong>A2</strong></td>
+<td data-label="Criterion">Operating point</td>
+<td data-label="Proposed threshold">recall @ 10 % decline ≥ 0.30</td>
+<td data-label="Source class">our measurement</td>
+<td data-label="Our proxy">Taiwan OOF</td>
+<td data-label="State today">reference <strong>0.315</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A3</strong></td>
+<td data-label="Criterion">Calibration</td>
+<td data-label="Proposed threshold">Brier skill ≥ 0.10; slope 0.80–1.25; ECE ≤ 0.05</td>
+<td data-label="Source class">IRB-style validation practice</td>
+<td data-label="Our proxy">Taiwan OOF</td>
+<td data-label="State today">reference <strong>0.217 / 1.06 / 0.012</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A4</strong></td>
+<td data-label="Criterion">Cost</td>
+<td data-label="Proposed threshold">≤ 0.60 per applicant at 5:1</td>
+<td data-label="Source class">our measurement</td>
+<td data-label="Our proxy">German + Taiwan</td>
+<td data-label="State today">reference <strong>0.582 / 0.556</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A5</strong></td>
+<td data-label="Criterion">Explanation</td>
+<td data-label="Proposed threshold">every decline carries 3 faithful reason codes</td>
+<td data-label="Source class">adverse-action law (Reg B, 12 CFR 1002.9)</td>
+<td data-label="Our proxy">HELOC xML</td>
+<td data-label="State today"><strong>UNMEASURED — no licence</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A6</strong></td>
+<td data-label="Criterion">Stability</td>
+<td data-label="Proposed threshold">PSI ≤ 0.10 out-of-time</td>
+<td data-label="Source class">model-risk guidance (SR 11-7)</td>
+<td data-label="Our proxy">none held</td>
+<td data-label="State today"><strong>UNMEASURED — no time axis</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A7</strong></td>
+<td data-label="Criterion">Latency / unit cost</td>
+<td data-label="Proposed threshold">p95 ≤ 100 ms; cost per 1,000 decisions stated</td>
+<td data-label="Source class">operations</td>
+<td data-label="Our proxy">harness</td>
+<td data-label="State today"><strong>UNMEASURED — no GPU run</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A8</strong></td>
+<td data-label="Criterion">Provenance</td>
+<td data-label="Proposed threshold">every training record licensed and traceable</td>
+<td data-label="Source class">this lane's register</td>
+<td data-label="Our proxy"><code>pack/README.md</code></td>
+<td data-label="State today"><strong>measured — R-01…R-04</strong></td>
+</tr>
+<tr>
+<td data-label="#"><strong>A9</strong></td>
+<td data-label="Criterion">Fair lending</td>
+<td data-label="Proposed threshold">AIR ≥ 0.80 at the operating cut, with reasons</td>
+<td data-label="Source class">4/5ths convention</td>
+<td data-label="Our proxy">Taiwan diagnostic</td>
+<td data-label="State today"><strong>0.818 (sex) · 0.747 (age)</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="52-the-finding-the-demand-map-produces">5.2 The finding the demand map produces</h3>
+<p><strong>Six of the nine criteria can be measured with the corpora on disk. Two cannot be measured at all —
+A5 (explanation) and A6 (stability) — and one is diagnostic only (A9).</strong> A buyer in the first three
+rows of the table will notice: no regulated lender signs for a PD with no stability evidence, and no
+compliance function signs for a decline with no reason codes.</p>
+<p>That is not a training problem. It is a <strong>data problem</strong>, and it belongs in Phase 2:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Gap</th>
+<th>What would close it</th>
+<th>Where it stands</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Gap">No out-of-time corpus</td>
+<td data-label="What would close it">a loan-level set with issue dates and performance, licence-clear</td>
+<td data-label="Where it stands">Home Credit has no application date; Lending Club has <code>issue_d</code> but an unproven licence; Freddie Mac needs an account</td>
+</tr>
+<tr>
+<td data-label="Gap">No explanation benchmark</td>
+<td data-label="What would close it">HELOC xML challenge, terms read and licence proven</td>
+<td data-label="Where it stands">blocked (<code>R-06</code>)</td>
+</tr>
+<tr>
+<td data-label="Gap">No thin-file population</td>
+<td data-label="What would close it">a first-time-borrower or BNPL corpus, licence-clear</td>
+<td data-label="Where it stands">none identified</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The honest consequence.</strong> On the corpora we hold, this lane can build and prove a <em>discrimination and
+calibration</em> product for a lender with bureau data. It cannot yet prove an <em>explanation or stability</em>
+product for a regulated one — and those are the two things the lane's own Phase 0 said were the only
+defensible reason to use a language model at all. The demand map and the weakness map point at the
+same gap from opposite directions, which is the strongest signal either could give.</p>
+<hr />
+<h2 id="6-where-small-models-fail-the-hypotheses-and-the-test-that-would-prove-each">6. Where small models fail — the hypotheses, and the test that would prove each</h2>
+<p>The owner's question is where small models fail today. On this lane, the honest answer has two halves:
+what is <strong>known</strong> (literature, class B), and what is <strong>untested here</strong> (class C, with a named test).
+Nothing below is presented as our measurement.</p>
+<h3 id="61-what-is-known-from-public-work">6.1 What is known from public work</h3>
+<ul>
+<li><strong>Trees still beat neural networks on medium-sized tabular data.</strong> Grinsztajn, Oyallon &amp; Varoquaux
+  (NeurIPS 2022, <em>Why do tree-based models still outperform deep learning on typical tabular data?</em>)
+  is the reference result, and it is why the bar for a 4 B decoder is a GBM and not another decoder.</li>
+<li><strong>Serialisation matters for language models on tables.</strong> TabLLM (Hegselmann et al., AISTATS 2023)
+  showed few-shot tabular classification with LLMs is feasible, and that the <em>text template</em> — not
+  just the features — moves the result. That makes column order and number formatting a protocol
+  variable on this lane, and Phase 0 froze them for exactly that reason.</li>
+<li><strong>Small-data tabular models are strong without training.</strong> TabPFN v2 (Hollmann et al., <em>Nature</em>,
+  January 2025) is the current demonstration, and it is why TabPFN sits in the Phase 0 shortlist as a
+  <em>reference</em>, not a contender.</li>
+</ul>
+<p>These are class B: someone else's measurement. They set the burden of proof. They do not settle it.</p>
+<h3 id="62-what-is-untested-here-seven-hypotheses-with-their-tests">6.2 What is untested here — seven hypotheses with their tests</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Failure mode</th>
+<th>Why it would bite on this lane</th>
+<th>The test that proves it</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>H1</strong></td>
+<td data-label="Failure mode"><strong>Serialisation sensitivity</strong> — score moves when columns are reordered or units rescaled</td>
+<td data-label="Why it would bite on this lane">the only interface to a tabular row is text</td>
+<td data-label="The test that proves it">permute field order and scale <code>BILL_AMT*</code> by 1/1000; AUC must move &lt; MDE (0.014)</td>
+<td data-label="State">UNMEASURED (<code>CM-R6</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>H2</strong></td>
+<td data-label="Failure mode"><strong>Numeracy</strong> — comparisons and thresholds on numbers</td>
+<td data-label="Why it would bite on this lane"><code>PAY_0</code> and <code>LIMIT_BAL</code> are the whole signal; both are numeric</td>
+<td data-label="The test that proves it">monotonicity probe: raising <code>PAY_0</code> (worse repayment) must not lower PD; count violations</td>
+<td data-label="State">UNMEASURED (<code>CM-R6</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>H3</strong></td>
+<td data-label="Failure mode"><strong>Miscalibrated token probabilities</strong></td>
+<td data-label="Why it would bite on this lane"><code>P(default)</code> is a softmax over two tokens, not a fitted probability</td>
+<td data-label="The test that proves it">gate <strong>G2</strong>: Brier, slope, intercept</td>
+<td data-label="State">UNMEASURED (<code>CM-R1</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>H4</strong></td>
+<td data-label="Failure mode"><strong>Imbalance collapse</strong> — everything predicted to the majority</td>
+<td data-label="Why it would bite on this lane">4.8 % (Polish) to 30 % (German) base rates</td>
+<td data-label="The test that proves it">recall @ 10 % decline, Brier, and the capture table</td>
+<td data-label="State">UNMEASURED (<code>CM-R1</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>H5</strong></td>
+<td data-label="Failure mode"><strong>Missing values</strong> — <code>NA</code> handling</td>
+<td data-label="Why it would bite on this lane">neither headline corpus has a null, so a base can look fine and fail in production</td>
+<td data-label="The test that proves it">MCAR injection at 10 % and 30 % on Taiwan; AUC loss &lt; MDE</td>
+<td data-label="State">UNMEASURED (<code>CM-R2</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>H6</strong></td>
+<td data-label="Failure mode"><strong>Unfaithful explanations</strong> — plausible reasons that do not describe the score</td>
+<td data-label="Why it would bite on this lane">the reason channel is the product's whole justification</td>
+<td data-label="The test that proves it">HELOC protocol, or attribution-agreement diagnostic (never a score)</td>
+<td data-label="State">UNMEASURED (<code>CM-R3</code>)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>H7</strong></td>
+<td data-label="Failure mode"><strong>Unit economics</strong> — GPU cost per decision</td>
+<td data-label="Why it would bite on this lane">a GBM scores in microseconds on CPU</td>
+<td data-label="The test that proves it">measure rows/GPU-hour and cost per 1,000 decisions against the API price</td>
+<td data-label="State">UNMEASURED (<code>CM-R7</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>H7 deserves its sentence, and it is measured on one side.</strong> The reference scores <strong>443,842 rows/s</strong>
+— 2.25 µs per decision on one CPU core (<code>intervals.json</code>). The Phase 0 estimate for a 4 B model is
+200–400 rows/s batched, so <strong>1,100–2,200× slower per decision</strong>, and an order of magnitude worse
+single-stream. If the lane sells decisions, the model must be doing something the GBM cannot — and per
+§5 that something is A5, which is unmeasurable. That is the commercial form of the same gap.</p>
+<hr />
+<h2 id="7-what-not-to-train-the-strengths-named-before-phase-2">7. What not to train — the strengths, named before Phase 2</h2>
+<p>The Recipe's warning is specific: a mixture dominated by what the base already does well buys a few
+points near a ceiling and is <strong>maintenance, not mission</strong>. Applied here, before any mixture exists:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Do not build a mixture around…</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Do not build a mixture around…">German Credit</td>
+<td data-label="Why">1,000 rows; every model is within 0.06 AUC of every other; it cannot resolve an improvement (§Phase 0 power table)</td>
+</tr>
+<tr>
+<td data-label="Do not build a mixture around…">The majority class</td>
+<td data-label="Why">at 22 % prevalence the "always good" baseline is already 78 % accurate and worth nothing</td>
+</tr>
+<tr>
+<td data-label="Do not build a mixture around…">Taiwan's high-limit segment</td>
+<td data-label="Why">AUC 0.770 and recall 0.388 — already the easy end; it is a <strong>maintenance</strong> row</td>
+</tr>
+<tr>
+<td data-label="Do not build a mixture around…">Aggregate AUC</td>
+<td data-label="Why">the reference gains most of its remaining error in the thin-file segment; aggregate AUC hides exactly that</td>
+</tr>
+</tbody>
+</table></div>
+<p>And the corollary: a row is <strong>mission</strong> only if it has a measured weakness behind it (W1, W2) or a
+commission that will produce one (W5–W9). Everything else is maintenance and must be labelled so in
+the Phase 5 mixture, with its share capped.</p>
+<hr />
+<h2 id="8-what-phase-1-hands-to-phase-2">8. What Phase 1 hands to Phase 2</h2>
+<p>The weakness map is a shopping list only if it names the shape of the missing data:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Weakness</th>
+<th>Data shape that would address it</th>
+<th>Track</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Weakness">W1 thin-file discrimination</td>
+<td data-label="Data shape that would address it">first-time-borrower / BNPL applications with outcomes; alternative-data fields</td>
+<td data-label="Track">A (public) or B (generated)</td>
+</tr>
+<tr>
+<td data-label="Weakness">W2 recall at the operating point</td>
+<td data-label="Data shape that would address it"><strong>more defaults at the same prevalence</strong>, not more rows — the segment is data-poor, not row-poor</td>
+<td data-label="Track">A</td>
+</tr>
+<tr>
+<td data-label="Weakness">W5 missing-data robustness</td>
+<td data-label="Data shape that would address it">a corpus with documented missingness (Polish, 41,322 <code>?</code>) plus injected-missingness fixtures</td>
+<td data-label="Track">A + fixture</td>
+</tr>
+<tr>
+<td data-label="Weakness">W6 explanation</td>
+<td data-label="Data shape that would address it">HELOC or equivalent with reason-code ground truth</td>
+<td data-label="Track">A or B, licence-gated</td>
+</tr>
+<tr>
+<td data-label="Weakness">W8 stability</td>
+<td data-label="Data shape that would address it">any loan-level set with issue dates spanning ≥ 12 months</td>
+<td data-label="Track">A</td>
+</tr>
+<tr>
+<td data-label="Weakness">W3, W4, W7</td>
+<td data-label="Data shape that would address it">no data required — W3 is a gate, W4 is a scoping decision, W7 is a diagnostic</td>
+<td data-label="Track">—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Coverage is judged against this table, not against row counts.</strong> A 300k-row corpus that adds no
+thin-file cases covers none of W1 or W2 and must be flagged as such in Phase 2, however large it is.</p>
+<hr />
+<h2 id="9-decision-rows">9. Decision rows</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Decision</th>
+<th>Options</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>D-R7</strong></td>
+<td data-label="Decision">Confirm the acceptance bar (A1–A9 thresholds)</td>
+<td data-label="Options">adopt as proposed · amend</td>
+<td data-label="Recommendation">Adopt A1–A4 and A8 now; A5/A6/A9 stay UNMEASURED until the data exists</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R8</strong></td>
+<td data-label="Decision">Is thin-file a target segment or out of scope?</td>
+<td data-label="Options">in · out</td>
+<td data-label="Recommendation"><strong>Out</strong> until a thin-file corpus exists — the ablation (§4.3) says we cannot serve it honestly</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R9</strong></td>
+<td data-label="Decision">Accept "no stability evidence" as a known limitation of v1?</td>
+<td data-label="Options">accept · block the product</td>
+<td data-label="Recommendation">Accept for an internal/analytical buyer; block for a regulated one</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R10</strong></td>
+<td data-label="Decision">Commission CM-R2/R5/R6 now or after the base run?</td>
+<td data-label="Options">now · after CM-R1</td>
+<td data-label="Recommendation"><strong>After CM-R1</strong> — the base's numbers decide whether robustness is worth measuring</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="10-commissions-the-measurements-that-would-end-the-unmeasured-rows">10. Commissions — the measurements that would end the UNMEASURED rows</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>What it measures</th>
+<th>Depends on</th>
+<th>Cost</th>
+<th>Turns class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>CM-R1</strong></td>
+<td data-label="What it measures">The base's whole battery (Phase 0 §10)</td>
+<td data-label="Depends on">GPU access (B-5)</td>
+<td data-label="Cost">~1 GPU-hour</td>
+<td data-label="Turns class">C → A for W9, H3, H4</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>CM-R2</strong></td>
+<td data-label="What it measures">Missing-data robustness, MCAR 10 % / 30 %</td>
+<td data-label="Depends on">CM-R1 (a model to test)</td>
+<td data-label="Cost">&lt; 1 GPU-hour</td>
+<td data-label="Turns class">W5, H5</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>CM-R3</strong></td>
+<td data-label="What it measures">Explanation fidelity on HELOC</td>
+<td data-label="Depends on">licence (R-06)</td>
+<td data-label="Cost">1–2 days</td>
+<td data-label="Turns class">W6, H6</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>CM-R4</strong></td>
+<td data-label="What it measures">Fair-lending formalisation (AIR with reasons, per segment)</td>
+<td data-label="Depends on">CM-R1</td>
+<td data-label="Cost">CPU only</td>
+<td data-label="Turns class">W7 diagnostic → evidence</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>CM-R5</strong></td>
+<td data-label="What it measures">Out-of-time stability (PSI)</td>
+<td data-label="Depends on">a dated corpus (Home Credit / Lending Club)</td>
+<td data-label="Cost">1 day + licence</td>
+<td data-label="Turns class">W8, A6</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>CM-R6</strong></td>
+<td data-label="What it measures">Serialisation and numeracy probes (H1, H2)</td>
+<td data-label="Depends on">CM-R1</td>
+<td data-label="Cost">&lt; 1 GPU-hour</td>
+<td data-label="Turns class">H1, H2</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>CM-R7</strong></td>
+<td data-label="What it measures">Unit economics (rows/GPU-hour, cost per 1k decisions)</td>
+<td data-label="Depends on">CM-R1</td>
+<td data-label="Cost">minutes</td>
+<td data-label="Turns class">H7, A7</td>
+</tr>
+</tbody>
+</table></div>
+<p>Six of the seven are cheap and blocked on the same thing: a base run. That is the same blocker as
+Phase 0, which is the point — measurement debt compounds, and this packet prices it.</p>
+<hr />
+<h2 id="11-blockers">11. Blockers</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Blocker</th>
+<th>Owner</th>
+<th>Effect on this phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>B-5</strong></td>
+<td data-label="Blocker">No GPU access</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect on this phase">W9, H3, H4, H7 stay UNMEASURED; five commissions queue behind it</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R-05</strong></td>
+<td data-label="Blocker">Home Credit unaccepted</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect on this phase">No stability corpus, no large-scale discrimination test</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R-06</strong></td>
+<td data-label="Blocker">HELOC licence unproven</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect on this phase">W6 and A5 — the product's justification — stay unmeasurable</td>
+</tr>
+<tr>
+<td data-label="#"><strong>B-7</strong></td>
+<td data-label="Blocker">No second agent, different family</td>
+<td data-label="Owner">Ronin</td>
+<td data-label="Effect on this phase">Phase 4 verification still unassigned</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="12-receipts-and-reproduction">12. Receipts and reproduction</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Artefact</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Artefact"><a href="phase1-risk/out/weakness.json"><code>phase1-risk/out/weakness.json</code></a></td>
+<td data-label="What it proves">decile calibration, capture/lift, segment tables, permutation importance, both corpora</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase1-risk/out/intervals.json"><code>phase1-risk/out/intervals.json</code></a></td>
+<td data-label="What it proves">bootstrap SE/CI/MDE for recall@10 %, cost, segment AUC, the <code>PAY_*</code> ablation, and the fair-lending ratios</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code class="language-bash">cd credit
+export PYTHONPATH=$PWD/.pylibs:$PWD/phase0-risk
+python3 phase1-risk/weakness.py     # segments, capture, importance
+python3 phase1-risk/intervals.py    # intervals, ablation, fair-lending diagnostic
+</code></pre>
+<p>Both scripts read only the frozen OOF files from Phase 0 and the curated corpora; neither trains a
+language model, and neither produces a model score.</p>
+<hr />
+<h2 id="13-recipe-conformance">13. Recipe conformance</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Recipe clause</th>
+<th>Where it is satisfied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Recipe clause">Per benchmark: base score, loss mechanism, MDE, stretch</td>
+<td data-label="Where it is satisfied">§3 — every row carries all four columns</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">No claimed weakness without a measured number or UNMEASURED + commission</td>
+<td data-label="Where it is satisfied">§1, §3 — class A/B/C on every row; §10 names the commission</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Train the weaknesses, not the strengths</td>
+<td data-label="Where it is satisfied">§7 — maintenance rows named, caps deferred to Phase 5</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Coverage judged against the weakness map</td>
+<td data-label="Where it is satisfied">§8 — the shopping list is shapes, not row counts</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Competitor pass standard</td>
+<td data-label="Where it is satisfied">§5.1 — acceptance criteria, with source class per row</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">UNMEASURED is a standing state</td>
+<td data-label="Where it is satisfied">§3 (W5, W6, W8, W9), §5.2, §11</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="14-revision-history">14. Revision history</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Rev</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Rev">1</td>
+<td data-label="Date">2026-11-11</td>
+<td data-label="Change">First Phase 1 packet for Model 2. Nine weakness rows, five demand archetypes, nine acceptance criteria, seven commissions</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p><em>No training was started. No corpus was built. No base score exists. The measured numbers in this
+packet are properties of the task (segments, capture, ablation) and of the reference control; each has
+a receipt, and each is labelled with how far it may be pushed.</em></p>
+  <div class="footer">
+    <p><strong>Document provenance.</strong> Credit Risk Phase 1 packet, rev. 1, 11 November 2026,
+    CREDIT lane. Written from the consolidated Recipe v1 Phase 1 text, the frozen registration
+    <code>CREDIT-RISK-P0-PREREG-001</code>, the Phase 0 receipts and the two Phase 1 scripts
+    (<code>phase1-risk/weakness.py</code>, <code>intervals.py</code>). Every number is a property of the
+    task or of the reference model; none is a base score.</p>
+    <p><strong>Revisions are recorded, never silently overwritten.</strong> No language model has been
+    scored on this lane, so the base column is empty by fact and not by oversight. The measured rows
+    are the task's, not the model's: segments, capture, ablation, intervals. D-R7…D-R10, B-5, B-6,
+    B-7, R-05 and R-06 remain open. The HTML edition is generated from the markdown by
+    <code>build_phase1_risk_guide.py</code>.</p>
+    <p class="up">CREDIT · Model 2 · Phase 1 · AITIUM INC</p>
+  </div>
+  </main>
+</div>
+</div>
+</body>
+</html>

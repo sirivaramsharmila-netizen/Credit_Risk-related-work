@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit Risk — Phase 3: corpus build, decontamination and the audit · CREDIT lane</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --bg:#f4f2ec;
+    --ink:#15181c;
+    --body:#2b3138;
+    --muted:#697079;
+    --line:#dcdfd8;
+    --line-soft:#e9ebe5;
+    --accent:#1d5c46;
+    --accent-2:#2f7f62;
+    --accent-soft:#e9f1ec;
+    --amber:#8a5a12;
+    --amber-soft:#fdf4e5;
+    --red:#8c2f2f;
+    --red-soft:#fbeeed;
+    --blue:#22456f;
+    --blue-soft:#eaf0f7;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{
+    margin:0;background:var(--bg);color:var(--body);
+    font-family:var(--sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .shell{max-width:1240px;margin:0 auto;padding:0 30px 96px}
+  .layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:54px;align-items:start}
+  .layout > *{min-width:0}
+  main{min-width:0;max-width:100%}
+  @media (max-width:1040px){.layout{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+
+  /* masthead */
+  header.mast{padding:58px 0 30px;border-bottom:1px solid var(--line);margin-bottom:38px}
+  .eyebrow{
+    font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:0 0 18px
+  }
+  h1{
+    font-family:var(--serif);font-weight:600;font-size:clamp(36px,4.6vw,56px);
+    line-height:1.06;letter-spacing:-.018em;color:var(--ink);margin:0 0 20px;max-width:20em
+  }
+  .deck{font-size:19px;line-height:1.55;color:#3c434b;max-width:44em;margin:0 0 26px}
+  .deck strong{color:var(--ink);font-weight:650}
+  .meta{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+    border-top:1px solid var(--line-soft);padding-top:18px;max-width:980px
+  }
+  @media (max-width:780px){.meta{grid-template-columns:repeat(2,1fr);gap:18px}}
+  .meta div{padding-right:18px}
+  .meta dt{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}
+  .meta dd{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+  .meta code{white-space:nowrap}
+
+  /* kpi */
+  .kpi{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:0 0 14px;max-width:980px
+  }
+  .kpi::after{content:"";display:none;background:var(--paper)}
+  .kpi div{background:var(--paper);padding:14px 16px}
+  @media (max-width:780px){.kpi{grid-template-columns:repeat(2,1fr)}.kpi::after{display:block}}
+  .kpi .kv{font-family:var(--serif);font-size:25px;line-height:1.05;color:var(--ink);display:block;margin-bottom:3px}
+  .kpi .kl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .seal{font-size:12.5px;color:var(--amber);max-width:64em;margin:0 0 34px}
+  .seal span{color:var(--muted)}
+  .deck code{background:#eceae3;font-size:.86em}
+  .seal b{letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}
+
+  /* toc */
+  .toc{position:sticky;top:26px;padding-top:8px;font-size:13px}
+  .toc .toc-h{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .toc ol{list-style:none;margin:0;padding:0}
+  .toc li{margin:0 0 2px}
+  .toc a{
+    display:block;color:#414850;text-decoration:none;padding:5px 8px 5px 10px;
+    border-left:2px solid transparent;line-height:1.35
+  }
+  .toc a:hover{color:var(--accent);background:#efeee7;border-left-color:var(--accent-2)}
+  .toc .n{color:#9aa1a8;font-family:var(--mono);font-size:10.5px;margin-right:7px}
+
+  /* sections */
+  section{margin:0 0 58px;scroll-margin-top:22px}
+  .sec-kicker{
+    font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin:0 0 6px
+  }
+  h2{
+    font-family:var(--serif);font-size:33px;line-height:1.13;letter-spacing:-.012em;
+    color:var(--ink);font-weight:600;margin:0 0 20px;padding-bottom:14px;
+    border-bottom:1px solid var(--line)
+  }
+  h3{
+    font-family:var(--serif);font-size:21px;line-height:1.28;color:var(--ink);
+    font-weight:600;margin:34px 0 10px
+  }
+  h3.step-h{
+    display:flex;align-items:baseline;gap:12px;
+    background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:28px 0 12px
+  }
+  .step-badge{
+    font-family:var(--mono);font-size:11.5px;color:var(--accent);background:var(--accent-soft);
+    border:1px solid #cfe0d5;padding:2px 6px;white-space:nowrap
+  }
+  p{margin:0 0 14px;max-width:48em}
+  ul,ol{margin:0 0 14px;padding-left:22px;max-width:48em}
+  li{margin:0 0 7px}
+  li::marker{color:#9aa1a8}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(29,92,70,.25)}
+  a:hover{border-bottom-color:var(--accent)}
+  code{font-family:var(--mono);font-size:.875em;background:#f0efe9;padding:1px 5px;border-radius:3px;color:#333a41}
+  strong{color:var(--ink)}
+  hr{border:none;border-top:1px solid var(--line);margin:0 0 34px}
+
+  /* callouts */
+  blockquote{
+    margin:24px 0;padding:17px 20px;background:var(--paper);
+    border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:2px
+  }
+  blockquote p{margin:0 0 8px;max-width:48em}
+  blockquote p:last-child{margin-bottom:0}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;max-width:100%;margin:0 0 24px;border:1px solid var(--line);background:var(--paper)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.46}
+  th{
+    text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#5a626a;
+    font-weight:650;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:bottom;
+    background:#fbfaf7
+  }
+  td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fbfaf7}
+  td code{white-space:normal;overflow-wrap:break-word}
+  @media (max-width:700px){
+    .tbl-wrap{border:none;background:transparent;overflow:visible}
+    .tbl-wrap table{display:block;width:100%}
+    .tbl-wrap thead{display:none}
+    .tbl-wrap tbody{display:block}
+    .tbl-wrap tr{display:block;border:1px solid var(--line);background:var(--paper);margin:0 0 10px}
+    .tbl-wrap td{display:block;padding:8px 13px;border-bottom:1px solid var(--line-soft);width:auto;text-align:left !important}
+    .tbl-wrap tr td:last-child{border-bottom:none}
+    .tbl-wrap td::before{
+      content:attr(data-label);display:block;font-size:9.5px;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--muted);font-weight:650;line-height:1.5;margin:0 0 3px
+    }
+    .tbl-wrap td[data-label=""]::before{display:none}
+    .tbl-wrap td code{white-space:normal}
+    .pill{white-space:normal}
+  }
+
+  /* code */
+  pre{
+    background:#151a1e;color:#dfe5e2;padding:16px 18px;border-radius:3px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:0 0 20px
+  }
+  pre code{background:none;color:inherit;padding:0;font-size:inherit;white-space:pre}
+
+  /* pills */
+  .pill{
+    display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;padding:3px 7px;border-radius:2px;white-space:nowrap;
+    border:1px solid transparent;line-height:1.25
+  }
+  .pill.done{background:#e6f0e9;color:#1b5a43;border-color:#cfe0d5}
+  .pill.open{background:var(--amber-soft);color:#7d5210;border-color:#eedcb9}
+  .pill.stop{background:var(--red-soft);color:#7f2b2b;border-color:#eccfcd}
+  .pill.info{background:var(--blue-soft);color:var(--blue);border-color:#d3dfec}
+
+  /* footer */
+  .footer{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;font-size:12.5px;color:var(--muted);max-width:64em}
+  .footer p{max-width:64em}
+  .up{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9aa1a8;margin-top:14px}
+
+  @media print{
+    body{background:#fff;font-size:10.5pt}
+    .shell{max-width:none;padding:0}
+    .layout{display:block}
+    .toc{display:none}
+    header.mast{padding-top:0}
+    section{page-break-inside:auto;margin-bottom:30px}
+    blockquote,.tbl-wrap,h3.step-h{page-break-inside:avoid}
+    h2,h3{page-break-after:avoid}
+    a{color:var(--ink);border-bottom:none}
+    pre{background:#f4f4ef;color:#222;border:1px solid #ddd;white-space:pre-wrap}
+    .tbl-wrap{overflow:visible;page-break-inside:avoid}
+    table{font-size:9pt}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="mast">
+  <p class="eyebrow">AITIUM INC · CREDIT lane · Model 2 · Phase 3 of 6 — corpus and audit</p>
+  <h1>Credit Risk — Phase 3: corpus build, decontamination and the audit</h1>
+  <p class="deck">A corpus is not a pile of rows: it is rows that survived a scan, fixtures that prove the scan works, and an arithmetic line that ties. Built from one synthetic source, audited on the shipped files, and withheld from release until the owner says otherwise.</p>
+  <dl class="meta">
+    <div><dt>Phase</dt><dd>3 — corpus + decontamination</dd></div>
+    <div><dt>Owner</dt><dd>Sharmila Sirivaram<br>CREDIT lane</dd></div>
+    <div><dt>Registration</dt><dd><code>CREDIT-RISK-P0-PREREG-001</code><br>frozen 2026-11-11</dd></div>
+    <div><dt>Issue</dt><dd>2026-11-11<br>packet rev. 1 · mirrors the .md</dd></div>
+  </dl>
+</header>
+
+<div class="kpi">
+  <div><span class="kv">32,409</span><span class="kl">Records built</span></div>
+  <div><span class="kv">100 / 100</span><span class="kl">Planted leaks dropped</span></div>
+  <div><span class="kv">1,003</span><span class="kl">Near-duplicate pairs</span></div>
+  <div><span class="kv">0</span><span class="kl">Cross-split leakage</span></div>
+  <div><span class="kv">NO</span><span class="kl">Released for training</span></div>
+</div>
+<p class="seal"><span>Release: NO</span> <b>Phase 3:</b> the corpus is built, scanned, split and audited on the shipped
+files — but it rests on a single synthetic source, so it is a candidate, not a training set.</p>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-h">Contents</p>
+    <div class="toc">
+<ul>
+<li><a href="#phase-3-corpus-build-decontamination-and-the-integrity-audit">Phase 3 — Corpus build, decontamination and the integrity audit</a><ul>
+<li><a href="#0-what-phase-3-does-and-what-it-cannot-do-on-this-lane">0. What Phase 3 does, and what it cannot do on this lane</a></li>
+<li><a href="#1-the-corpus-in-numbers">1. The corpus, in numbers</a></li>
+<li><a href="#2-decontaminate-before-splitting-the-order-is-the-point">2. Decontaminate before splitting — the order is the point</a></li>
+<li><a href="#3-splitting-by-family-and-the-part-that-cannot-be-proven">3. Splitting by family — and the part that cannot be proven</a></li>
+<li><a href="#4-the-integrity-audit-on-the-final-files-not-in-the-builders-memory">4. The integrity audit — on the final files, not in the builder's memory</a></li>
+<li><a href="#5-the-record-format-verdict-channel-only-and-why">5. The record format — verdict channel only, and why</a></li>
+<li><a href="#6-provenance-the-stamp-is-applied-at-ingest-not-added-later">6. Provenance — the stamp is applied at ingest, not added later</a></li>
+<li><a href="#7-what-this-corpus-is-and-what-it-is-not">7. What this corpus is, and what it is not</a></li>
+<li><a href="#8-what-phase-4-must-verify-and-on-which-files">8. What Phase 4 must verify, and on which files</a></li>
+<li><a href="#9-decision-rows-and-blockers">9. Decision rows and blockers</a></li>
+<li><a href="#10-receipts-and-reproduction">10. Receipts and reproduction</a></li>
+<li><a href="#11-recipe-conformance">11. Recipe conformance</a></li>
+<li><a href="#12-revision-history">12. Revision history</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+<h1 id="phase-3-corpus-build-decontamination-and-the-integrity-audit">Phase 3 — Corpus build, decontamination and the integrity audit</h1>
+<p><strong>Lane:</strong> CREDIT · <strong>Model:</strong> 2 — Credit Risk · <strong>Phase:</strong> 3 of 6
+<strong>Revision:</strong> 1 · <strong>Date:</strong> 12 November 2026 · <strong>Author:</strong> Sharmila Sirivaram
+<strong>Spec:</strong> <code>credit-risk-token-spec/1.0</code> · <strong>Pipeline:</strong> <a href="phase3-risk/"><code>phase3-risk/</code></a> — <code>build.py</code> · <code>controls.py</code> · <code>verify.py</code>
+<strong>Receipts:</strong> <a href="phase3-risk/out/build_report.json"><code>build_report.json</code></a> · <a href="phase3-risk/out/controls.json"><code>controls.json</code></a> · <a href="phase3-risk/out/audit.json"><code>audit.json</code></a> · <a href="phase3-risk/out/verify.json"><code>verify.json</code></a>
+<strong>Status:</strong> corpus built and audited. <strong>Released for training: NO</strong> — single synthetic source, owner's tap pending (D-R12).</p>
+<blockquote>
+<p><strong>The one sentence.</strong> A corpus is not a pile of rows; it is a pile of rows that survived a scan, a
+set of fixtures that prove the scan works, and an arithmetic line that ties — and this one is
+built from a single synthetic corpus, so it is a <strong>candidate</strong> that proves the machinery, not a
+training release.</p>
+</blockquote>
+<hr />
+<h2 id="0-what-phase-3-does-and-what-it-cannot-do-on-this-lane">0. What Phase 3 does, and what it cannot do on this lane</h2>
+<p>Phase 3 builds the training corpus, decontaminates <strong>before</strong> any split, plants controls that prove
+the scanner, and audits the final files. All four are done here, on real bytes, with receipts.</p>
+<p>What it cannot do is hide the Phase 2 finding: <strong>there are zero evidence-grade consumer-PD rows
+available for training.</strong> The corpora that could measure a verdict are the benchmarks (eval-only), the
+Polish corpus is corporate and narrows to 30 positives, and the one clean admission is synthetic. So
+this phase produces:</p>
+<ul>
+<li>a <strong>pipeline</strong> that is proven, reusable, and carries over from the fraud lane;</li>
+<li>a <strong>corpus</strong> of 32,409 records from the only admissible consumer-PD source, stamped and audited;</li>
+<li>an honest <strong>release verdict</strong>: <code>NO</code>, pending D-R12.</li>
+</ul>
+<p>That is the correct shape. A pipeline with no corpus would be untested; a corpus with no audit would
+be a liability. What is <em>not</em> acceptable is presenting 32k synthetic rows as a training set for a
+regulated product, and this packet does not.</p>
+<hr />
+<h2 id="1-the-corpus-in-numbers">1. The corpus, in numbers</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="">Source</td>
+<td data-label=""><strong>R-08</strong> <code>credit_risk_laotse</code> — Kaggle, <strong>CC0 1.0</strong>, <code>DATASET_ROW</code>, <code>synthetic: true</code></td>
+</tr>
+<tr>
+<td data-label="">Rows in</td>
+<td data-label="">32,581</td>
+</tr>
+<tr>
+<td data-label="">Structural drops</td>
+<td data-label=""><strong>7</strong> (age &gt; 100, employment &gt; 60, employment &gt; age — values no lender could issue)</td>
+</tr>
+<tr>
+<td data-label="">Content drops</td>
+<td data-label=""><strong>0</strong> (no benchmark row found)</td>
+</tr>
+<tr>
+<td data-label="">Duplicate drops</td>
+<td data-label=""><strong>165</strong> exact duplicates, collapsed to one representative per family</td>
+</tr>
+<tr>
+<td data-label=""><strong>Rows out</strong></td>
+<td data-label=""><strong>32,409</strong></td>
+</tr>
+<tr>
+<td data-label="">Positives</td>
+<td data-label="">7,088 (21.87 %)</td>
+</tr>
+<tr>
+<td data-label="">Splits</td>
+<td data-label="">train <strong>25,921</strong> · val <strong>3,247</strong> · test <strong>3,241</strong></td>
+</tr>
+<tr>
+<td data-label="">Spec</td>
+<td data-label=""><code>credit-risk-token-spec/1.0</code> — <code>col=value</code>, ordered, <code>__NA__</code>, no rounding</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Tie-out, per source and in total:</strong> <code>32,581 = 0 provenance + 0 content + 7 structural + 165 duplicate
++ 32,409 kept</code> — <strong>ties</strong>.</p>
+<p><strong>What is not in it, by rule.</strong> German (1,000 rows) and Taiwan (30,000 rows) are <strong>evaluation-only</strong>
+under <code>CREDIT-RISK-P0-PREREG-001</code>; any row of theirs appearing here would be a benchmark leak, which
+is what the scan exists to catch. R-03 Credit Approval is excluded on target semantics — its label is
+1987 lending policy, not default. R-04 Polish is excluded from the PD corpus: corporate bankruptcy is
+a different question, and its usable slice is 30 positives.</p>
+<hr />
+<h2 id="2-decontaminate-before-splitting-the-order-is-the-point">2. Decontaminate before splitting — the order is the point</h2>
+<pre><code>load → structural drops → tokenise → CONTENT SCAN → provenance drops → duplicate families
+     → near-duplicate families → split by family → audit → verify at the destination
+</code></pre>
+<p>The scan runs <strong>before</strong> the split. A row that matches a benchmark is removed while it is still in one
+undifferentiated corpus, so no split is ever built on contaminated rows — the failure mode the Recipe
+names is a corpus where the leak was found after the split and "fixed" by moving rows.</p>
+<h3 id="21-the-matcher-had-to-change-and-the-reason-is-measured">2.1 The matcher had to change, and the reason is measured</h3>
+<p>The fraud matcher requires <strong>eight consecutive tokens, in order</strong> — correct for long transaction
+strings, because a bag-of-words scanner once produced totals that had to be withdrawn in full.</p>
+<p>On this lane that rule is necessary for benchmark leaks and <strong>useless for near-duplicates</strong>, and the
+controls proved it: an 11-token risk record contains only <strong>4</strong> eight-grams, so changing one field
+destroys all four and an 8-gram matcher reports <strong>0 near-duplicates</strong> on a corpus that has 1,003 of
+them. The first control run failed on exactly this, and the failure is recorded rather than tuned away.</p>
+<p>So the scan is two matchers, each for its own job:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Matcher</th>
+<th>Unit</th>
+<th>Threshold</th>
+<th>Catches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Matcher">Benchmark leak</td>
+<td data-label="Unit">8 consecutive tokens, in order</td>
+<td data-label="Threshold">any shared run</td>
+<td data-label="Catches">a benchmark row, or a paraphrase long enough to share a run</td>
+</tr>
+<tr>
+<td data-label="Matcher">Near-duplicate</td>
+<td data-label="Unit"><code>field=value</code> token set</td>
+<td data-label="Threshold">overlap ≥ <strong>0.90</strong></td>
+<td data-label="Catches">the same applicant with one field changed (10/11 = 0.909)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Both are in the receipt with the threshold they were frozen at. The overlap coefficient, not Jaccard,
+is the near-duplicate measure: Jaccard scores the same one-field edit 10/12 = 0.83 and would pass it.</p>
+<h3 id="22-controls-a-scan-without-fixtures-is-not-evidence">2.2 Controls — a scan without fixtures is not evidence</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Required</th>
+<th>Observed</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Control">Planted benchmark leaks (real German + Taiwan rows, serialised)</td>
+<td data-label="Required">all dropped</td>
+<td data-label="Observed"><strong>100 / 100</strong></td>
+<td data-label="Verdict">pass</td>
+</tr>
+<tr>
+<td data-label="Control">Known-clean records (corpus rows)</td>
+<td data-label="Required">all kept</td>
+<td data-label="Observed"><strong>400 / 400</strong></td>
+<td data-label="Verdict">pass</td>
+</tr>
+<tr>
+<td data-label="Control">Near-duplicate pairs (one numeric field nudged)</td>
+<td data-label="Required">all caught</td>
+<td data-label="Observed"><strong>10 / 10</strong></td>
+<td data-label="Verdict">pass</td>
+</tr>
+<tr>
+<td data-label="Control"><strong>Negative control</strong> — matcher disabled</td>
+<td data-label="Required">leaks must survive</td>
+<td data-label="Observed"><strong>100 / 100 survive</strong></td>
+<td data-label="Verdict">pass (the harness fails when it should)</td>
+</tr>
+<tr>
+<td data-label="Control">Arithmetic</td>
+<td data-label="Required">scanned = dropped + kept</td>
+<td data-label="Observed"><strong>500 = 100 + 400</strong></td>
+<td data-label="Verdict">ties</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The negative control is the one that matters.</strong> A scan that drops everything, or nothing, can pass a
+one-sided test. Running the same fixtures with the matcher disabled and confirming the 100 leaks come
+through is what proves the drops came from the matcher and not from the plumbing.</p>
+<hr />
+<h2 id="3-splitting-by-family-and-the-part-that-cannot-be-proven">3. Splitting by family — and the part that cannot be proven</h2>
+<p>Splits are built by <strong>family root</strong>, and a family is a duplicate component, not a row:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Family construction</th>
+<th style="text-align: right;">Observed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Family construction">Exact-duplicate groups</td>
+<td style="text-align: right;" data-label="Observed">165 (collapsed to one row each)</td>
+</tr>
+<tr>
+<td data-label="Family construction">Near-duplicate <strong>pairs</strong> (overlap ≥ 0.90)</td>
+<td style="text-align: right;" data-label="Observed"><strong>1,003</strong></td>
+</tr>
+<tr>
+<td data-label="Family construction">Near-duplicate <strong>components</strong></td>
+<td style="text-align: right;" data-label="Observed">31,406</td>
+</tr>
+<tr>
+<td data-label="Family construction">Largest component</td>
+<td style="text-align: right;" data-label="Observed"><strong>3 rows</strong></td>
+</tr>
+<tr>
+<td data-label="Family construction">Near-duplicate pairs crossing a split</td>
+<td style="text-align: right;" data-label="Observed"><strong>0</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The limit, stated plainly:</strong> R-08 publishes <strong>no entity identifier</strong>. There is no customer, no
+account, no application id — so an <em>entity</em> family cannot be constructed and the claim "no customer
+appears in two splits" is <strong>UNPROVEN</strong>, not passed. What is proven is narrower and still valuable:
+every exact and near-duplicate component is kept whole, and that was verified on the shipped files
+(§4). This is the same defect the fraud lane found in ULB, in a different guise, and it is recorded
+rather than papered over.</p>
+<hr />
+<h2 id="4-the-integrity-audit-on-the-final-files-not-in-the-builders-memory">4. The integrity audit — on the final files, not in the builder's memory</h2>
+<p>The Recipe's lesson is a split-writer defect that collided on <strong>793 duplicate record ids</strong> while the
+code "obviously" could not do that. <code>verify.py</code> therefore re-reads the three JSONL files from disk and
+re-derives every claim.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Check">Re-derive each record's <code>token_sha256</code> from its own <code>prompt_fields</code></td>
+<td data-label="Result"><strong>0 failures</strong> of 32,409</td>
+</tr>
+<tr>
+<td data-label="Check">Row ids unique across the whole corpus</td>
+<td data-label="Result"><strong>0 duplicates</strong></td>
+</tr>
+<tr>
+<td data-label="Check">Exact duplicate in two splits (train↔val, train↔test, val↔test)</td>
+<td data-label="Result"><strong>0 / 0 / 0</strong></td>
+</tr>
+<tr>
+<td data-label="Check">Near-duplicate pair straddling two splits</td>
+<td data-label="Result"><strong>0</strong></td>
+</tr>
+<tr>
+<td data-label="Check">File row counts match the builder's receipts</td>
+<td data-label="Result"><strong>yes</strong></td>
+</tr>
+<tr>
+<td data-label="Check">Tie-out re-derived from the files</td>
+<td data-label="Result"><code>32,581 = 172 + 32,409</code> — <strong>ties</strong></td>
+</tr>
+<tr>
+<td data-label="Check"><strong>Positive control</strong> — a one-field mutation of a val record</td>
+<td data-label="Result"><strong>5 / 5 caught</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>The positive control exists because "0 near-duplicates across splits" is a pass that a broken checker
+also produces. Mutating five val records and requiring all five to be detected is what makes the zero
+mean something.</p>
+<hr />
+<h2 id="5-the-record-format-verdict-channel-only-and-why">5. The record format — verdict channel only, and why</h2>
+<pre><code class="language-json">{&quot;row_id&quot;:&quot;cr-000004231&quot;,&quot;source_id&quot;:&quot;credit_risk_laotse&quot;,
+ &quot;prompt_fields&quot;:{&quot;person_age&quot;:&quot;26&quot;,&quot;person_income&quot;:&quot;48000&quot;, &quot;…&quot;:&quot;…&quot;,&quot;loan_int_rate&quot;:null},
+ &quot;risk&quot;:&quot; default&quot;,
+ &quot;provenance&quot;:{&quot;row_id&quot;:&quot;cr-000004231&quot;,&quot;source_id&quot;:&quot;credit_risk_laotse&quot;,&quot;source_ref&quot;:&quot;https://www.kaggle.com/datasets/laotse/credit-risk-dataset&quot;,
+               &quot;source_row_id&quot;:&quot;credit_risk_laotse-004231&quot;,&quot;source_row_index&quot;:4231,&quot;retrieved_at&quot;:&quot;2026-11-12T00:00:00Z&quot;,
+               &quot;licence&quot;:&quot;CC0 1.0&quot;,&quot;licence_verdict&quot;:&quot;ADMITTED&quot;,&quot;origin_class&quot;:&quot;DATASET_ROW&quot;,&quot;synthetic&quot;:true,&quot;benchmark_flag&quot;:false},
+ &quot;token_sha256&quot;:&quot;…&quot;}
+</code></pre>
+<p><strong>The verdict field is byte-identical to the Phase 0 scoring prefix</strong> <code>{"risk": "</code> — the format the
+model is trained on is the format the harness measures, which is the Phase 5 rule applied before
+Phase 5.</p>
+<p><strong>The reason channel is absent, deliberately.</strong> No admitted corpus carries ground-truth adverse-action
+reason codes. A reason derived from SHAP or from the model's own opinion is not verified supervision —
+it is a model judgement, and the Recipe does not allow judgement as verification. Building reason
+records from it would manufacture the one capability this lane most needs to measure (R4/W6) and make
+it permanently unfalsifiable. So the corpus is verdict-only, and the explanation duty stays
+<strong>UNMEASURED</strong> with its commission (<code>CM-R3</code>) rather than silently faked.</p>
+<hr />
+<h2 id="6-provenance-the-stamp-is-applied-at-ingest-not-added-later">6. Provenance — the stamp is applied at ingest, not added later</h2>
+<p>Every record carries the frozen stamp from Phase 2 §8: <code>row_id</code>, <code>source_id</code>, <code>source_ref</code>,
+<code>source_row_id</code>, <code>source_row_index</code>, <code>retrieved_at</code>, <code>licence</code>, <code>licence_verdict</code>, <code>origin_class</code>,
+<code>synthetic</code>, <code>benchmark_flag</code>, <code>token_sha256</code>.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Check">Records whose <code>source_id</code> resolves to an <code>ADMITTED</code> register row</td>
+<td data-label="Result"><strong>32,409 / 32,409</strong></td>
+</tr>
+<tr>
+<td data-label="Check">Records whose licence field matches the register row</td>
+<td data-label="Result"><strong>32,409 / 32,409</strong></td>
+</tr>
+<tr>
+<td data-label="Check"><code>origin_class = DATASET_ROW</code> on every record</td>
+<td data-label="Result"><strong>32,409 / 32,409</strong></td>
+</tr>
+<tr>
+<td data-label="Check"><code>synthetic = true</code> on every record</td>
+<td data-label="Result"><strong>32,409 / 32,409</strong></td>
+</tr>
+<tr>
+<td data-label="Check"><code>benchmark_flag = true</code></td>
+<td data-label="Result"><strong>0</strong> (benchmarks are excluded entirely)</td>
+</tr>
+</tbody>
+</table></div>
+<p>A record whose <code>source_id</code> does not resolve to an admitted register row does not ship; that is a drop
+(<code>P1_SOURCE_NOT_ADMITTED</code>), not a warning. It fired zero times here, which is correct — and the
+controls prove it would fire if a benchmark row were slipped in.</p>
+<hr />
+<h2 id="7-what-this-corpus-is-and-what-it-is-not">7. What this corpus is, and what it is not</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>It is</th>
+<th>It is not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="It is">a proven pipeline, reusable for the fraud lane and any future corpus</td>
+<td data-label="It is not">evidence about real borrowers</td>
+</tr>
+<tr>
+<td data-label="It is">32,409 stamped, scanned, split, audited records</td>
+<td data-label="It is not">a training release</td>
+</tr>
+<tr>
+<td data-label="It is">the W5 missingness substrate (9.56 % missing, two fields)</td>
+<td data-label="It is not">a calibration corpus — synthetic applicants cannot calibrate a real PD</td>
+</tr>
+<tr>
+<td data-label="It is">a format that matches the Phase 0 scoring path exactly</td>
+<td data-label="It is not">a reason-code corpus (the channel is absent by design)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Release verdict: NO.</strong> The owner's tap (D-R12) decides whether a synthetic-only corpus is ever used
+to train. Until then this is a candidate, and the honest headline is that the lane's Phase 3 gate is
+open — not passed.</p>
+<hr />
+<h2 id="8-what-phase-4-must-verify-and-on-which-files">8. What Phase 4 must verify, and on which files</h2>
+<p>The independent-verifier gate comes next, and this packet says exactly what it will be handed:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Path</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Input">Frozen spec</td>
+<td data-label="Path"><code>phase3-risk/spec.py</code></td>
+<td data-label="State"><code>credit-risk-token-spec/1.0</code>, hash in <code>build_report.json</code></td>
+</tr>
+<tr>
+<td data-label="Input">Three split files</td>
+<td data-label="Path"><code>phase3-risk/out/corpus/{train,val,test}.jsonl</code></td>
+<td data-label="State">hashes in <code>build_report.json</code> §files</td>
+</tr>
+<tr>
+<td data-label="Input">Build receipt</td>
+<td data-label="Path"><code>phase3-risk/out/build_report.json</code></td>
+<td data-label="State">tie-out + audit + limits</td>
+</tr>
+<tr>
+<td data-label="Input">Controls</td>
+<td data-label="Path"><code>phase3-risk/out/controls.json</code></td>
+<td data-label="State">100/100, 400/400, 10/10, negative control</td>
+</tr>
+<tr>
+<td data-label="Input">Destination check</td>
+<td data-label="Path"><code>phase3-risk/out/verify.json</code></td>
+<td data-label="State">re-derived hashes, 0 cross-split leakage, positive control</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The verifier can refuse.</strong> The three things it should refuse on: a hash that does not re-derive, a
+cross-split duplicate, or a families claim presented as proven when R-08 has no entity id.</p>
+<hr />
+<h2 id="9-decision-rows-and-blockers">9. Decision rows and blockers</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Decision</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>D-R12</strong></td>
+<td data-label="Decision">Ingest/train on R-08 (synthetic)?</td>
+<td data-label="State"><strong>Open</strong> — corpus built, release withheld</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R15</strong></td>
+<td data-label="Decision">Accept "entity family UNPROVEN" for a synthetic corpus?</td>
+<td data-label="State"><strong>Open</strong> — relevant only if R-08 ever ships</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-05</strong></td>
+<td data-label="Decision">Home Credit access</td>
+<td data-label="State">Open — the only route to a real training corpus</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-06</strong></td>
+<td data-label="Decision">HELOC terms</td>
+<td data-label="State">Open — blocks the reason channel</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>B-5</strong></td>
+<td data-label="Decision">GPU access</td>
+<td data-label="State">Open — blocks the base row, not this phase</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>B-7</strong></td>
+<td data-label="Decision">Second-family verifier</td>
+<td data-label="State">Open — Phase 4 is unassigned</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="10-receipts-and-reproduction">10. Receipts and reproduction</h2>
+<pre><code class="language-bash">cd credit
+export PYTHONPATH=$PWD/.pylibs
+python3 phase3-risk/build.py      # build, scan, split, audit  → out/build_report.json, out/audit.json
+python3 phase3-risk/controls.py   # planted fixtures + negative control → out/controls.json
+python3 phase3-risk/verify.py     # re-derive everything from the files → out/verify.json
+</code></pre>
+<p>The corpus under <code>phase3-risk/out/corpus/</code> and the candidate CSV are <strong>git-ignored</strong>: the receipts and
+their hashes are the artefact. Anyone can rebuild the bytes from the URL in the register and check
+the hash.</p>
+<hr />
+<h2 id="11-recipe-conformance">11. Recipe conformance</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Recipe clause</th>
+<th>Where it is satisfied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Recipe clause">Decontaminate <strong>before</strong> splitting</td>
+<td data-label="Where it is satisfied">§2 — scan precedes split; order is in the script</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Zero benchmark examples in training data</td>
+<td data-label="Where it is satisfied">§2.2 — 100 planted leaks dropped; benchmarks excluded wholesale</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Matcher requires words together, in order</td>
+<td data-label="Where it is satisfied">§2.1 — 8-gram in-order for leaks; measured failure of that unit for near-dups, and the fix</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Planted controls in every scan</td>
+<td data-label="Where it is satisfied">§2.2 — plus a negative control that must fail</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Silent exclusions are defects</td>
+<td data-label="Where it is satisfied">§1 tie-out — every drop is counted and named, and the arithmetic ties</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Integrity audit on final files</td>
+<td data-label="Where it is satisfied">§4 — duplicates, near-duplicates, cross-split leakage, re-derived hashes</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Splits by family root, verified on files</td>
+<td data-label="Where it is satisfied">§3–§4 — components kept whole, verified; entity family recorded UNPROVEN</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Arithmetic ties end to end</td>
+<td data-label="Where it is satisfied">§1, §4 — <code>32,581 = 0 + 0 + 7 + 165 + 32,409</code></td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Licence FINAL before training</td>
+<td data-label="Where it is satisfied">§7 — release withheld; provenance stamp checked on every record</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="12-revision-history">12. Revision history</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Rev</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Rev">1</td>
+<td data-label="Date">2026-11-12</td>
+<td data-label="Change">First Phase 3 packet for Model 2: corpus built from R-08, dual matcher, controls, destination audit, release withheld</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p><em>No training was started. The corpus is a candidate built from a single synthetic source, with every
+drop counted, every claim re-derived from the files, and the one thing that cannot be proven — entity
+families — recorded as unproven rather than assumed.</em></p>
+  <div class="footer">
+    <p><strong>Document provenance.</strong> Credit Risk Phase 3 packet, rev. 1, 12 November 2026,
+    CREDIT lane. Written from the consolidated Recipe v1 Phase 3 text, the Phase 2 register, and three
+    scripts in <code>phase3-risk/</code> (<code>build.py</code>, <code>controls.py</code>,
+    <code>verify.py</code>) under token spec <code>credit-risk-token-spec/1.0</code>. Every number is
+    re-derived from the shipped files, and every claim that cannot be proven is marked UNPROVEN.</p>
+    <p><strong>Revisions are recorded, never silently overwritten.</strong> No training was started and
+    the corpus is not released. The first control run failed — the 8-gram matcher could not see a
+    one-field near-duplicate — and that failure is recorded in §2.1 rather than tuned away. Entity
+    family separation is UNPROVEN because the source publishes no identifier. D-R12, D-R15, B-5, B-7,
+    R-05 and R-06 remain open. The HTML edition is generated from the markdown by
+    <code>build_phase3_risk_guide.py</code>.</p>
+    <p class="up">CREDIT · Model 2 · Phase 3 · AITIUM INC</p>
+  </div>
+  </main>
+</div>
+</div>
+</body>
+</html>

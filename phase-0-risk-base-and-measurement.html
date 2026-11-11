@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit Risk — Phase 0: the base and the measurement plan · CREDIT lane</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --bg:#f4f2ec;
+    --ink:#15181c;
+    --body:#2b3138;
+    --muted:#697079;
+    --line:#dcdfd8;
+    --line-soft:#e9ebe5;
+    --accent:#1d5c46;
+    --accent-2:#2f7f62;
+    --accent-soft:#e9f1ec;
+    --amber:#8a5a12;
+    --amber-soft:#fdf4e5;
+    --red:#8c2f2f;
+    --red-soft:#fbeeed;
+    --blue:#22456f;
+    --blue-soft:#eaf0f7;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{
+    margin:0;background:var(--bg);color:var(--body);
+    font-family:var(--sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .shell{max-width:1240px;margin:0 auto;padding:0 30px 96px}
+  .layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:54px;align-items:start}
+  .layout > *{min-width:0}
+  main{min-width:0;max-width:100%}
+  @media (max-width:1040px){.layout{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+
+  /* masthead */
+  header.mast{padding:58px 0 30px;border-bottom:1px solid var(--line);margin-bottom:38px}
+  .eyebrow{
+    font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:0 0 18px
+  }
+  h1{
+    font-family:var(--serif);font-weight:600;font-size:clamp(36px,4.6vw,56px);
+    line-height:1.06;letter-spacing:-.018em;color:var(--ink);margin:0 0 20px;max-width:20em
+  }
+  .deck{font-size:19px;line-height:1.55;color:#3c434b;max-width:44em;margin:0 0 26px}
+  .deck strong{color:var(--ink);font-weight:650}
+  .meta{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+    border-top:1px solid var(--line-soft);padding-top:18px;max-width:980px
+  }
+  @media (max-width:780px){.meta{grid-template-columns:repeat(2,1fr);gap:18px}}
+  .meta div{padding-right:18px}
+  .meta dt{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}
+  .meta dd{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+  .meta code{white-space:nowrap}
+
+  /* kpi */
+  .kpi{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:0 0 14px;max-width:980px
+  }
+  .kpi::after{content:"";display:none;background:var(--paper)}
+  .kpi div{background:var(--paper);padding:14px 16px}
+  @media (max-width:780px){.kpi{grid-template-columns:repeat(2,1fr)}.kpi::after{display:block}}
+  .kpi .kv{font-family:var(--serif);font-size:25px;line-height:1.05;color:var(--ink);display:block;margin-bottom:3px}
+  .kpi .kl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .seal{font-size:12.5px;color:var(--amber);max-width:64em;margin:0 0 34px}
+  .seal span{color:var(--muted)}
+  .deck code{background:#eceae3;font-size:.86em}
+  .seal b{letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}
+
+  /* toc */
+  .toc{position:sticky;top:26px;padding-top:8px;font-size:13px}
+  .toc .toc-h{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .toc ol{list-style:none;margin:0;padding:0}
+  .toc li{margin:0 0 2px}
+  .toc a{
+    display:block;color:#414850;text-decoration:none;padding:5px 8px 5px 10px;
+    border-left:2px solid transparent;line-height:1.35
+  }
+  .toc a:hover{color:var(--accent);background:#efeee7;border-left-color:var(--accent-2)}
+  .toc .n{color:#9aa1a8;font-family:var(--mono);font-size:10.5px;margin-right:7px}
+
+  /* sections */
+  section{margin:0 0 58px;scroll-margin-top:22px}
+  .sec-kicker{
+    font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin:0 0 6px
+  }
+  h2{
+    font-family:var(--serif);font-size:33px;line-height:1.13;letter-spacing:-.012em;
+    color:var(--ink);font-weight:600;margin:0 0 20px;padding-bottom:14px;
+    border-bottom:1px solid var(--line)
+  }
+  h3{
+    font-family:var(--serif);font-size:21px;line-height:1.28;color:var(--ink);
+    font-weight:600;margin:34px 0 10px
+  }
+  h3.step-h{
+    display:flex;align-items:baseline;gap:12px;
+    background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:28px 0 12px
+  }
+  .step-badge{
+    font-family:var(--mono);font-size:11.5px;color:var(--accent);background:var(--accent-soft);
+    border:1px solid #cfe0d5;padding:2px 6px;white-space:nowrap
+  }
+  p{margin:0 0 14px;max-width:48em}
+  ul,ol{margin:0 0 14px;padding-left:22px;max-width:48em}
+  li{margin:0 0 7px}
+  li::marker{color:#9aa1a8}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(29,92,70,.25)}
+  a:hover{border-bottom-color:var(--accent)}
+  code{font-family:var(--mono);font-size:.875em;background:#f0efe9;padding:1px 5px;border-radius:3px;color:#333a41}
+  strong{color:var(--ink)}
+  hr{border:none;border-top:1px solid var(--line);margin:0 0 34px}
+
+  /* callouts */
+  blockquote{
+    margin:24px 0;padding:17px 20px;background:var(--paper);
+    border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:2px
+  }
+  blockquote p{margin:0 0 8px;max-width:48em}
+  blockquote p:last-child{margin-bottom:0}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;max-width:100%;margin:0 0 24px;border:1px solid var(--line);background:var(--paper)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.46}
+  th{
+    text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#5a626a;
+    font-weight:650;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:bottom;
+    background:#fbfaf7
+  }
+  td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fbfaf7}
+  td code{white-space:normal;overflow-wrap:break-word}
+  @media (max-width:700px){
+    .tbl-wrap{border:none;background:transparent;overflow:visible}
+    .tbl-wrap table{display:block;width:100%}
+    .tbl-wrap thead{display:none}
+    .tbl-wrap tbody{display:block}
+    .tbl-wrap tr{display:block;border:1px solid var(--line);background:var(--paper);margin:0 0 10px}
+    .tbl-wrap td{display:block;padding:8px 13px;border-bottom:1px solid var(--line-soft);width:auto;text-align:left !important}
+    .tbl-wrap tr td:last-child{border-bottom:none}
+    .tbl-wrap td::before{
+      content:attr(data-label);display:block;font-size:9.5px;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--muted);font-weight:650;line-height:1.5;margin:0 0 3px
+    }
+    .tbl-wrap td[data-label=""]::before{display:none}
+    .tbl-wrap td code{white-space:normal}
+    .pill{white-space:normal}
+  }
+
+  /* code */
+  pre{
+    background:#151a1e;color:#dfe5e2;padding:16px 18px;border-radius:3px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:0 0 20px
+  }
+  pre code{background:none;color:inherit;padding:0;font-size:inherit;white-space:pre}
+
+  /* pills */
+  .pill{
+    display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;padding:3px 7px;border-radius:2px;white-space:nowrap;
+    border:1px solid transparent;line-height:1.25
+  }
+  .pill.done{background:#e6f0e9;color:#1b5a43;border-color:#cfe0d5}
+  .pill.open{background:var(--amber-soft);color:#7d5210;border-color:#eedcb9}
+  .pill.stop{background:var(--red-soft);color:#7f2b2b;border-color:#eccfcd}
+  .pill.info{background:var(--blue-soft);color:var(--blue);border-color:#d3dfec}
+
+  /* footer */
+  .footer{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;font-size:12.5px;color:var(--muted);max-width:64em}
+  .footer p{max-width:64em}
+  .up{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9aa1a8;margin-top:14px}
+
+  @media print{
+    body{background:#fff;font-size:10.5pt}
+    .shell{max-width:none;padding:0}
+    .layout{display:block}
+    .toc{display:none}
+    header.mast{padding-top:0}
+    section{page-break-inside:auto;margin-bottom:30px}
+    blockquote,.tbl-wrap,h3.step-h{page-break-inside:avoid}
+    h2,h3{page-break-after:avoid}
+    a{color:var(--ink);border-bottom:none}
+    pre{background:#f4f4ef;color:#222;border:1px solid #ddd;white-space:pre-wrap}
+    .tbl-wrap{overflow:visible;page-break-inside:avoid}
+    table{font-size:9pt}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="mast">
+  <p class="eyebrow">AITIUM INC · CREDIT lane · Model 2 · Phase 0 of 6 — the gate</p>
+  <h1>Credit Risk — Phase 0: the base and the measurement plan</h1>
+  <p class="deck">Fraud is a decision taken at transaction time; risk is a probability that must survive calibration and a decline that must survive an explanation. This packet fixes the capability map, the public harness that exists, the metrics that count, the sub-5B base shortlist and the frozen battery — before any data work and before any model score.</p>
+  <dl class="meta">
+    <div><dt>Phase</dt><dd>0 — base + measurement plan</dd></div>
+    <div><dt>Owner</dt><dd>Sharmila Sirivaram<br>CREDIT lane</dd></div>
+    <div><dt>Registration</dt><dd><code>CREDIT-RISK-P0-PREREG-001</code><br>frozen 2026-11-11</dd></div>
+    <div><dt>Issue</dt><dd>2026-11-11<br>packet rev. 1 · mirrors the .md</dd></div>
+  </dl>
+</header>
+
+<div class="kpi">
+  <div><span class="kv">0 / 3</span><span class="kl">Capability rows measured</span></div>
+  <div><span class="kv">0.779</span><span class="kl">Reference ROC-AUC · Taiwan</span></div>
+  <div><span class="kv">0.014</span><span class="kl">MDE vs a model · Taiwan</span></div>
+  <div><span class="kv">&plusmn;0.030</span><span class="kl">CI on one score · German</span></div>
+  <div><span class="kv">7,000</span><span class="kl">Rows the battery scores</span></div>
+</div>
+<p class="seal"><span>Base row: UNMEASURED</span> <b>Staging:</b> controls and reference rows are measured; no corpus,
+no training, no base score. The gate is open and the debt is countable.</p>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-h">Contents</p>
+    <div class="toc">
+<ul>
+<li><a href="#phase-0-base-shortlist-and-measurement-plan">Phase 0 — Base shortlist and measurement plan</a><ul>
+<li><a href="#0-read-this-first">0. Read this first</a></li>
+<li><a href="#1-what-carries-over-from-fraud-and-what-does-not">1. What carries over from fraud, and what does not</a></li>
+<li><a href="#2-capability-map-fixed-before-any-data-work">2. Capability map — fixed before any data work</a></li>
+<li><a href="#3-benchmarks-and-protocols-the-five-dials">3. Benchmarks and protocols — the five dials</a></li>
+<li><a href="#4-metrics-that-count-and-the-accuracy-trap-measured">4. Metrics that count — and the accuracy trap, measured</a></li>
+<li><a href="#5-calibration-the-duty-that-separates-risk-from-fraud">5. Calibration — the duty that separates risk from fraud</a></li>
+<li><a href="#6-power-what-each-benchmark-can-decide">6. Power — what each benchmark can decide</a></li>
+<li><a href="#7-the-base-shortlist-small-models-under-5-b">7. The base shortlist — small models, under 5 B</a></li>
+<li><a href="#8-what-the-base-must-beat">8. What the base must beat</a></li>
+<li><a href="#9-the-explanation-duty-the-capability-that-decides-whether-this-model-has-a-job">9. The explanation duty — the capability that decides whether this model has a job</a></li>
+<li><a href="#10-how-the-base-will-be-measured-the-run">10. How the base will be measured — the run</a></li>
+<li><a href="#11-decision-rows-the-owners-not-this-packets">11. Decision rows — the owner's, not this packet's</a></li>
+<li><a href="#12-blockers">12. Blockers</a></li>
+<li><a href="#13-receipts-and-reproduction">13. Receipts and reproduction</a></li>
+<li><a href="#14-recipe-conformance">14. Recipe conformance</a></li>
+<li><a href="#15-revision-history">15. Revision history</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+<h1 id="phase-0-base-shortlist-and-measurement-plan">Phase 0 — Base shortlist and measurement plan</h1>
+<p><strong>Lane:</strong> CREDIT · <strong>Model:</strong> 2 — Credit Risk (built next, after the fraud packet)
+<strong>Revision:</strong> 1 · <strong>Date:</strong> 11 November 2026 · <strong>Author:</strong> Sharmila Sirivaram
+<strong>Registration:</strong> <code>CREDIT-RISK-P0-PREREG-001</code> — FROZEN 2026-11-11T14:44Z, SHA-256 <code>a5c0a46e…b29379</code>
+<strong>Harness:</strong> <a href="phase0-risk/README.md"><code>phase0-risk/</code></a> — <code>split.py</code> · <code>metrics.py</code> · <code>controls.py</code> · <code>power.py</code> · <code>protocol.py</code> · <code>run_base.py</code>
+<strong>Receipts:</strong> <a href="phase0-risk/out/"><code>phase0-risk/out/</code></a> · <strong>HTML edition:</strong> <a href="phase-0-risk-base-and-measurement.html"><code>phase-0-risk-base-and-measurement.html</code></a>
+<strong>Status:</strong> controls and reference rows measured. <strong>Base row UNMEASURED. No corpus. No training.</strong></p>
+<blockquote>
+<p><strong>The one sentence.</strong> Fraud is a decision taken at transaction time; risk is a <em>probability</em> that
+must survive calibration and a <em>decline</em> that must survive an explanation — so this packet measures
+a different model on different metrics, and Phase 0 does not close until the base has one number
+on a public harness, read beside a calibrated reference, with the explanation duty either measured
+on a public benchmark or published as UNMEASURED.</p>
+</blockquote>
+<hr />
+<h2 id="0-read-this-first">0. Read this first</h2>
+<p><strong>What this packet is.</strong> Phase 0 for Model 2, in the same lane and on the same machinery as the
+fraud packet: the capability map fixed before data work, the public benchmarks that exist and the
+ones that do not, the metrics that count for an imbalanced default prediction, the base shortlist
+under the 5 B rule, and the frozen protocol the base will be scored on.</p>
+<p><strong>What it is not.</strong> It is not a corpus, not a weakness map, and not a score. No language model has
+been run. Everything below that is a number is either a property of the <em>data</em> (prevalence, power,
+baselines) or a property of the <em>reference model</em> (a gradient-boosted control), and both are
+labelled. The one cell that matters — the base's calibrated PD — is empty and marked UNMEASURED.</p>
+<p><strong>Why risk is a separate model.</strong> The owner's instruction is explicit and the measurement agrees:
+fraud is scored per transaction against a 0.17 % base rate and lives or dies on recall at a
+staffable alert volume; risk is scored per application against a 4.8–30 % base rate and lives or dies
+on a <strong>probability</strong> that a pricing and provisioning system can consume, plus a <strong>reason</strong> a
+regulator will accept. Same lane, same provenance machinery, different job, different measures,
+different model. Neither packet borrows the other's numbers.</p>
+<p><strong>What already exists.</strong> The fraud lane built the licence register, the provenance gate, the
+decontamination engine and the split-by-family discipline; those carry over unchanged (§1). The
+risk corpora are already acquired, hashed and licence-verified (<code>pack/</code>, 75,095 rows across four
+corpora). German Credit's split is a <strong>published OpenML fold file</strong>, and this packet proves the join
+to it row for row (§3). What does not exist is the base measurement, and it is blocked on compute.</p>
+<p><strong>Five rules this packet does not bend.</strong></p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Rule</th>
+<th>What it forbids</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#">1</td>
+<td data-label="Rule"><strong>One protocol, frozen before the run</strong></td>
+<td data-label="What it forbids">Choosing the metric or the split after seeing which flatters</td>
+</tr>
+<tr>
+<td data-label="#">2</td>
+<td data-label="Rule"><strong>Official harness where one exists; a named lane protocol where none does</strong></td>
+<td data-label="What it forbids">Calling a self-invented split "official", or hiding that it is not</td>
+</tr>
+<tr>
+<td data-label="#">3</td>
+<td data-label="Rule"><strong>Accuracy is never a metric</strong></td>
+<td data-label="What it forbids">A 77.9 %-accurate model that catches nothing being reported as working</td>
+</tr>
+<tr>
+<td data-label="#">4</td>
+<td data-label="Rule"><strong>Calibration is part of the measurement, not post-processing</strong></td>
+<td data-label="What it forbids">A ranking sold as a probability, or a calibration fit on the evaluation rows</td>
+</tr>
+<tr>
+<td data-label="#">5</td>
+<td data-label="Rule"><strong>A number names its benchmark, harness and evaluation set</strong></td>
+<td data-label="What it forbids">A bare "0.78" that cannot be traced to a split</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="1-what-carries-over-from-fraud-and-what-does-not">1. What carries over from fraud, and what does not</h2>
+<p>The owner's instruction is that the lane's machinery is shared. It is. The <em>measurement</em> is not.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Fraud (Model 1)</th>
+<th>Risk (Model 2)</th>
+<th>Carried over?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Item">Licence register</td>
+<td data-label="Fraud (Model 1)">F-01…F-03, evidence quoted</td>
+<td data-label="Risk (Model 2)">R-01…R-04, same register format</td>
+<td data-label="Carried over?"><strong>Yes — same register, new rows</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Provenance gate</td>
+<td data-label="Fraud (Model 1)">per-record corpus name or subset label</td>
+<td data-label="Risk (Model 2)">identical rule</td>
+<td data-label="Carried over?"><strong>Yes — unchanged</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Decontamination</td>
+<td data-label="Fraud (Model 1)">word-order matcher, planted controls, tie-out</td>
+<td data-label="Risk (Model 2)">identical engine, identical fixtures</td>
+<td data-label="Carried over?"><strong>Yes — unchanged</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Split discipline</td>
+<td data-label="Fraud (Model 1)">temporal (ULB), entity-family (Sparkov)</td>
+<td data-label="Risk (Model 2)">published folds (German), stratified (Taiwan)</td>
+<td data-label="Carried over?"><strong>Yes — same principle, different mechanism</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Power analysis</td>
+<td data-label="Fraud (Model 1)">bootstrap on the frozen test split</td>
+<td data-label="Risk (Model 2)">bootstrap on the frozen OOF/holdout</td>
+<td data-label="Carried over?"><strong>Yes — same method</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Trivial baselines</td>
+<td data-label="Fraud (Model 1)">always-not-fraud, random, base rate</td>
+<td data-label="Risk (Model 2)">always-good, always-bad, base rate, random</td>
+<td data-label="Carried over?"><strong>Yes — same discipline</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Headline metric</td>
+<td data-label="Fraud (Model 1)">PR-AUC, recall @ 1 % FPR</td>
+<td data-label="Risk (Model 2)"><strong>ROC-AUC, Brier, calibration slope, recall @ decline</strong></td>
+<td data-label="Carried over?"><strong>No — different job</strong></td>
+</tr>
+<tr>
+<td data-label="Item">The unmeasurable duty</td>
+<td data-label="Fraud (Model 1)">adverse-action explanation (C5)</td>
+<td data-label="Risk (Model 2)">adverse-action explanation (R4) + fair lending (R5)</td>
+<td data-label="Carried over?"><strong>No benchmark either way; both UNMEASURED</strong></td>
+</tr>
+<tr>
+<td data-label="Item">Scoring path</td>
+<td data-label="Fraud (Model 1)">two-token log-prob at <code>{"verdict": "</code></td>
+<td data-label="Risk (Model 2)">two-token log-prob at <code>{"risk": "</code></td>
+<td data-label="Carried over?"><strong>Yes — one protocol family</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>The last row is deliberate. The fraud lane's hardest-won decision was to abandon generation-and-parse
+for a single forward pass over two logits, because a parse failure silently became a score of 0.5 at
+a 0.13 % base rate. Risk inherits that path: <code>P(default)</code> is a renormalised softmax over two tokens,
+and a model that puts mass outside them is flagged by <em>coverage</em>, not silently rescaled.</p>
+<hr />
+<h2 id="2-capability-map-fixed-before-any-data-work">2. Capability map — fixed before any data work</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Capability</th>
+<th>Public benchmark</th>
+<th>Harness / protocol</th>
+<th>Metrics that count</th>
+<th>Base</th>
+<th>MDE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>R1</strong></td>
+<td data-label="Capability">Rank default risk correctly</td>
+<td data-label="Public benchmark">German Credit (R-01), Taiwan (R-02)</td>
+<td data-label="Harness / protocol">OpenML task 31 (official) · lane protocol (Taiwan)</td>
+<td data-label="Metrics that count">ROC-AUC, PR-AUC, KS</td>
+<td data-label="Base"><strong>UNMEASURED</strong></td>
+<td data-label="MDE">0.014 AUC (Taiwan) · 0.063 (German)</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R2</strong></td>
+<td data-label="Capability">Emit a <strong>calibrated</strong> PD</td>
+<td data-label="Public benchmark">same two corpora</td>
+<td data-label="Harness / protocol">same splits; calibration fitted in-fold</td>
+<td data-label="Metrics that count">Brier, Brier skill, slope, intercept, ECE</td>
+<td data-label="Base"><strong>UNMEASURED</strong></td>
+<td data-label="MDE">slope ±0.2 · Brier 0.01</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R3</strong></td>
+<td data-label="Capability">Hold an operating point</td>
+<td data-label="Public benchmark">same two corpora</td>
+<td data-label="Harness / protocol">fixed decline rates, 5:1 cost matrix</td>
+<td data-label="Metrics that count">recall @ 5/10/20 % decline, cost/applicant</td>
+<td data-label="Base"><strong>UNMEASURED</strong></td>
+<td data-label="MDE">±0.05 recall</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R4</strong></td>
+<td data-label="Capability">Explain a decline (adverse action)</td>
+<td data-label="Public benchmark">FICO HELOC xML challenge</td>
+<td data-label="Harness / protocol">official challenge protocol — <strong>licence unproven</strong></td>
+<td data-label="Metrics that count">reason-code agreement</td>
+<td data-label="Base"><strong>UNMEASURED (standing)</strong></td>
+<td data-label="MDE">—</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R5</strong></td>
+<td data-label="Capability">Fair lending / disparate impact</td>
+<td data-label="Public benchmark"><em>none public</em></td>
+<td data-label="Harness / protocol">—</td>
+<td data-label="Metrics that count">AIR, subgroup AUC — <strong>diagnostic only</strong></td>
+<td data-label="Base"><strong>UNMEASURED (standing)</strong></td>
+<td data-label="MDE">—</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R6</strong></td>
+<td data-label="Capability">Decision latency / cost per score</td>
+<td data-label="Public benchmark"><em>none public</em></td>
+<td data-label="Harness / protocol">—</td>
+<td data-label="Metrics that count">ms/row, rows/GPU-hour</td>
+<td data-label="Base"><strong>UNMEASURED (standing)</strong></td>
+<td data-label="MDE">—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>R4 is the load-bearing row.</strong> It is the one capability a gradient-boosted scorecard cannot have,
+and therefore the only defensible reason for a language model in this lane. It also has no public
+benchmark this lane may use: the HELOC corpus's licence is recorded as <em>unverified</em> in the pack
+register (a Hugging Face mirror carries a bare <code>cc</code>, which is not a licence). Under the Recipe a
+number from it is not a number, so R4 publishes as UNMEASURED — and §9 says exactly what that costs.</p>
+<p>R5 and R6 are diagnostics. A disparate-impact ratio or a latency figure can be computed, but there is
+no public benchmark and the Recipe forbids a home-grown number from being quoted as a model score.</p>
+<hr />
+<h2 id="3-benchmarks-and-protocols-the-five-dials">3. Benchmarks and protocols — the five dials</h2>
+<p>A benchmark is not a dataset. It is a machine with five dials, and changing one produces a number
+that belongs to a different benchmark. The fraud lane lost two cycles to protocol failures (GPQA as
+exact-answer; BFCL on a home-grown checker). For risk, the dials are these.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Dial</th>
+<th>Setting for this lane</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#">1</td>
+<td data-label="Dial"><strong>Corpus and split</strong></td>
+<td data-label="Setting for this lane">German: OpenML task 31 published folds. Taiwan: frozen stratified holdout</td>
+<td data-label="State"><strong>Pass</strong> — hashes in <code>out/split_report.json</code></td>
+</tr>
+<tr>
+<td data-label="#">2</td>
+<td data-label="Dial"><strong>Weights</strong></td>
+<td data-label="Setting for this lane"><code>Qwen/Qwen3-4B-Instruct-2507</code>, bf16, <strong>pinned Hub revision</strong></td>
+<td data-label="State"><strong>Open</strong> — revision not yet recorded</td>
+</tr>
+<tr>
+<td data-label="#">3</td>
+<td data-label="Dial"><strong>Prompt</strong></td>
+<td data-label="Setting for this lane"><code>credit-risk-score-protocol/1.0</code>, template SHA-256 <code>b2e9ac59…d3d77</code></td>
+<td data-label="State"><strong>Pass</strong> — frozen in <code>protocol.py</code></td>
+</tr>
+<tr>
+<td data-label="#">4</td>
+<td data-label="Dial"><strong>Scoring path</strong></td>
+<td data-label="Setting for this lane">logits at <code>{"risk": "</code> over <code>" default"</code> / <code>" no_default"</code></td>
+<td data-label="State"><strong>Pass</strong> — one path, no generation</td>
+</tr>
+<tr>
+<td data-label="#">5</td>
+<td data-label="Dial"><strong>Metric implementation</strong></td>
+<td data-label="Setting for this lane"><code>phase0-risk/metrics.py</code>, validated vs scikit-learn to 1e-9</td>
+<td data-label="State"><strong>Pass</strong> — <code>out/metrics_validation.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="31-german-credit-the-official-harness-and-the-join-that-had-to-be-proven">3.1 German Credit — the official harness, and the join that had to be proven</h3>
+<p>OpenML <strong>task 31</strong> publishes a fold-assignment file for the 1,000-row German corpus: 10 folds,
+100 test rows each, and the file is the harness — not a re-implementation of 10-fold CV that might
+differ in seed or stratification.</p>
+<p>Two joins had to be proven before the folds could be used:</p>
+<ol>
+<li><strong>Row order.</strong> OpenML's own ARFF for dataset 31 was compared to the curated parquet: every one of
+   the seven numeric columns and the class agree <strong>row for row, 0 mismatches</strong>. The curated file
+   preserves publisher order, and the publisher's order is OpenML's order.</li>
+<li><strong>Index base.</strong> The split file's <code>rowid</code> is <strong>0-based</strong>. Joined as 0-based, the folds are
+   class-stratified at exactly <strong>30 bad in every 100-row fold</strong> — the publisher's stratification
+   reproduced exactly. Joined as 1-based, every row shifts by one and the positives scatter over
+   22–36 per fold. The exact 30/30 is independent evidence that the join is right.</li>
+</ol>
+<p>Both proofs are in <code>out/split_report.json</code>. A failed proof makes <code>split.py</code> refuse to write folds.</p>
+<p><strong>What German is good for:</strong> protocol conformance, a published cost metric, and a corpus small enough
+to iterate on. <strong>What it is not good for:</strong> a model-comparison verdict (§6 — at n = 1,000 and 300
+bad, a 0.02 AUC gap is detected with 14 % power).</p>
+<h3 id="32-taiwan-default-no-official-harness-so-a-named-lane-protocol">3.2 Taiwan default — no official harness, so a named lane protocol</h3>
+<p>OpenML carries dataset 42477 but only a <strong>clustering</strong> task (254211), verified against the API. There
+is no publisher split and no supervised task, so there is no official harness to run. Pretending
+otherwise would be the exact defect the Recipe names.</p>
+<p>The lane therefore pre-registers one: stratified <strong>5-fold × 2 repeats</strong>, seed 20261111, plus a frozen
+<strong>80/20 holdout</strong> (n = 6,000, 1,327 defaults, prevalence 22.1167 %). Fold and holdout hashes are in
+the registration. Every number from it is labelled <strong>lane protocol — not an official harness</strong>, and
+no table quotes it without that label.</p>
+<p>This is the same position the fraud lane holds on ruling R2 (is a reconstructed FDB split
+"official"?), and it is Ronin's call, not this packet's. The difference is that here the answer is
+already known to be <em>no official harness exists</em>, so the honest fallback is a frozen protocol, not a
+reconstruction claim.</p>
+<h3 id="33-the-benchmarks-that-exist-and-cannot-be-run">3.3 The benchmarks that exist and cannot be run</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>What it would settle</th>
+<th>Why it cannot be run today</th>
+<th>Changeable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Benchmark"><strong>Home Credit Default Risk</strong> (307k applications)</td>
+<td data-label="What it would settle">The one public risk benchmark at scale; R1–R3 with a 0.001-class MDE</td>
+<td data-label="Why it cannot be run today">Kaggle competition: data and test labels behind accepted rules; anonymous API returns <strong>401</strong> (verified 2026-11-04). Test labels are never released — a local score requires a submission</td>
+<td data-label="Changeable?"><strong>Yes</strong> — one accepted account</td>
+</tr>
+<tr>
+<td data-label="Benchmark"><strong>FICO HELOC xML challenge</strong></td>
+<td data-label="What it would settle">R4, the explanation duty</td>
+<td data-label="Why it cannot be run today">Licence <strong>unproven</strong>: the HF mirror declares bare <code>cc</code>, which is not a licence; the FICO challenge terms were not read</td>
+<td data-label="Changeable?"><strong>Yes</strong> — read the terms</td>
+</tr>
+<tr>
+<td data-label="Benchmark"><strong>Lending Club</strong></td>
+<td data-label="What it would settle">Large real consumer-loan performance set</td>
+<td data-label="Why it cannot be run today">Two mirrors disagree on the upstream licence (CC0 vs ODbL); a re-uploader cannot establish upstream rights</td>
+<td data-label="Changeable?">Only via LendingClub's own grant</td>
+</tr>
+<tr>
+<td data-label="Benchmark"><strong>Polish bankruptcy</strong> (43,405 rows)</td>
+<td data-label="What it would settle">Corporate distress, 4.8 %</td>
+<td data-label="Why it cannot be run today">Not consumer PD; five forecast horizons pooled, so rows are not independent companies. Usable only as a shift check after grouping</td>
+<td data-label="Changeable?">Yes, but off-mission</td>
+</tr>
+<tr>
+<td data-label="Benchmark"><strong>Credit Approval</strong> (690 rows)</td>
+<td data-label="What it would settle">A hard tabular benchmark</td>
+<td data-label="Why it cannot be run today">55 % "rejected" is 1987 lending policy, not a default rate; semantically opaque</td>
+<td data-label="Changeable?">No — wrong target</td>
+</tr>
+</tbody>
+</table></div>
+<p>These five refusals matter more than they look. With German (1,000 rows) and Taiwan (30,000 rows),
+this lane has <strong>two</strong> usable predictions of default and <strong>zero</strong> usable benchmarks of explanation.
+That is the honest inventory, and it shapes every decision row in §11.</p>
+<hr />
+<h2 id="4-metrics-that-count-and-the-accuracy-trap-measured">4. Metrics that count — and the accuracy trap, measured</h2>
+<p>The owner's instruction is that accuracy alone is not a metric. On this lane it is worse than
+uninformative; it is <em>inverted</em>. Both corpora reward the model that predicts nothing.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Predict "no default" every time</th>
+<th style="text-align: right;">Accuracy</th>
+<th style="text-align: right;">ROC-AUC</th>
+<th style="text-align: right;">Defaults caught (of all)</th>
+<th style="text-align: right;">Brier</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Corpus">German (30.0 % bad)</td>
+<td data-label="Predict &quot;no default&quot; every time">all good</td>
+<td style="text-align: right;" data-label="Accuracy"><strong>70.0 %</strong></td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="Defaults caught (of all)"><strong>0 of 300</strong></td>
+<td style="text-align: right;" data-label="Brier">0.300</td>
+</tr>
+<tr>
+<td data-label="Corpus">Taiwan (22.12 % default)</td>
+<td data-label="Predict &quot;no default&quot; every time">all good</td>
+<td style="text-align: right;" data-label="Accuracy"><strong>77.9 %</strong></td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="Defaults caught (of all)"><strong>0 of 6,636</strong></td>
+<td style="text-align: right;" data-label="Brier">0.221</td>
+</tr>
+</tbody>
+</table></div>
+<p>A 77.9 %-accurate model with zero skill is the single most quotable wrong number available on this
+lane. So the battery is fixed to three kinds of number, none of which is accuracy:</p>
+<ol>
+<li><strong>Rank metrics, threshold-free</strong> — ROC-AUC (primary; it is the industry statistic and the metric
+   the one large public risk benchmark is scored on) and PR-AUC (co-primary, because prevalence
+   ranges from 4.8 % to 30 % across this lane's corpora and AUC hides that).</li>
+<li><strong>One decision-relevant operating point</strong> — recall at a fixed <strong>decline rate</strong> (5 / 10 / 20 %),
+   because that is the decision a lender actually makes, plus expected cost per applicant under the
+   publisher's <strong>5:1</strong> cost matrix (german.doc §8).</li>
+<li><strong>One calibration number</strong> — Brier against the base-rate Brier, plus the slope and intercept of
+   <code>y ~ sigmoid(a + b·logit(p))</code>, plus ECE (equal-width and equal-count, because 20 % prevalence
+   against 0.2 % fraud prevalence breaks equal-width bins).</li>
+</ol>
+<h3 id="41-trivial-baselines-computed-not-asserted">4.1 Trivial baselines — computed, not asserted</h3>
+<p>Out-of-fold / holdout, same engine as every model row. "Cost" is expected cost per applicant at the
+5:1 Bayes cut (approve a bad = 5, decline a good = 1).</p>
+<p><strong>German Credit — official folds, n = 1,000, 300 bad</strong></p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Row</th>
+<th style="text-align: right;">ROC-AUC</th>
+<th style="text-align: right;">PR-AUC</th>
+<th style="text-align: right;">KS</th>
+<th style="text-align: right;">Brier</th>
+<th style="text-align: right;">Cost</th>
+<th style="text-align: right;">Recall @ 10 % decline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Row">Always good</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="PR-AUC">0.300</td>
+<td style="text-align: right;" data-label="KS">0.000</td>
+<td style="text-align: right;" data-label="Brier">0.300</td>
+<td style="text-align: right;" data-label="Cost">1.500</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.100</td>
+</tr>
+<tr>
+<td data-label="Row">Always bad</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="PR-AUC">0.300</td>
+<td style="text-align: right;" data-label="KS">0.000</td>
+<td style="text-align: right;" data-label="Brier">0.700</td>
+<td style="text-align: right;" data-label="Cost">0.700</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.100</td>
+</tr>
+<tr>
+<td data-label="Row">Base-rate constant</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="PR-AUC">0.300</td>
+<td style="text-align: right;" data-label="KS">0.000</td>
+<td style="text-align: right;" data-label="Brier">0.210</td>
+<td style="text-align: right;" data-label="Cost">0.700</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.100</td>
+</tr>
+<tr>
+<td data-label="Row">Random uniform</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.458</td>
+<td style="text-align: right;" data-label="PR-AUC">0.277</td>
+<td style="text-align: right;" data-label="KS">0.006</td>
+<td style="text-align: right;" data-label="Brier">0.348</td>
+<td style="text-align: right;" data-label="Cost">0.891</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.093</td>
+</tr>
+<tr>
+<td data-label="Row"><strong>Reference (HGB)</strong></td>
+<td style="text-align: right;" data-label="ROC-AUC"><strong>0.771</strong></td>
+<td style="text-align: right;" data-label="PR-AUC"><strong>0.622</strong></td>
+<td style="text-align: right;" data-label="KS"><strong>0.401</strong></td>
+<td style="text-align: right;" data-label="Brier"><strong>0.180</strong></td>
+<td style="text-align: right;" data-label="Cost"><strong>0.673</strong></td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline"><strong>0.267</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Taiwan — frozen holdout / OOF, n = 30,000, 6,636 defaults</strong></p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Row</th>
+<th style="text-align: right;">ROC-AUC</th>
+<th style="text-align: right;">PR-AUC</th>
+<th style="text-align: right;">KS</th>
+<th style="text-align: right;">Brier</th>
+<th style="text-align: right;">Cost</th>
+<th style="text-align: right;">Recall @ 10 % decline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Row">Always good</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="PR-AUC">0.221</td>
+<td style="text-align: right;" data-label="KS">0.000</td>
+<td style="text-align: right;" data-label="Brier">0.221</td>
+<td style="text-align: right;" data-label="Cost">1.106</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.100</td>
+</tr>
+<tr>
+<td data-label="Row">Always bad</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="PR-AUC">0.221</td>
+<td style="text-align: right;" data-label="KS">0.000</td>
+<td style="text-align: right;" data-label="Brier">0.779</td>
+<td style="text-align: right;" data-label="Cost">0.779</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.100</td>
+</tr>
+<tr>
+<td data-label="Row">Base-rate constant</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.500</td>
+<td style="text-align: right;" data-label="PR-AUC">0.221</td>
+<td style="text-align: right;" data-label="KS">0.000</td>
+<td style="text-align: right;" data-label="Brier">0.172</td>
+<td style="text-align: right;" data-label="Cost">0.779</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.100</td>
+</tr>
+<tr>
+<td data-label="Row">Random uniform</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.503</td>
+<td style="text-align: right;" data-label="PR-AUC">0.222</td>
+<td style="text-align: right;" data-label="KS">0.014</td>
+<td style="text-align: right;" data-label="Brier">0.335</td>
+<td style="text-align: right;" data-label="Cost">0.829</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.101</td>
+</tr>
+<tr>
+<td data-label="Row"><strong>Reference (HGB)</strong></td>
+<td style="text-align: right;" data-label="ROC-AUC"><strong>0.779</strong></td>
+<td style="text-align: right;" data-label="PR-AUC"><strong>0.556</strong></td>
+<td style="text-align: right;" data-label="KS"><strong>0.428</strong></td>
+<td style="text-align: right;" data-label="Brier"><strong>0.135</strong></td>
+<td style="text-align: right;" data-label="Cost"><strong>0.556</strong></td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline"><strong>0.316</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Two things to read off these tables. First, <strong>AP equals prevalence for every constant scorer</strong> — the
+tie-grouping defect that once made a constant fraud scorer report 0.0016 against a 0.001317 base rate
+is fixed and proven in <code>out/metrics_validation.json</code>. Second, the <strong>cost metric is compressed</strong>: on
+German the reference beats the best trivial policy by 0.027 per applicant, which is inside the noise
+of 1,000 rows. Cost is reported; it is not a headline.</p>
+<h3 id="42-controls-that-prove-the-harness-not-the-model">4.2 Controls that prove the harness, not the model</h3>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Expected</th>
+<th>Observed (German / Taiwan)</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Control">Leak probe — label as a feature</td>
+<td data-label="Expected">AUC ≈ 1.0</td>
+<td data-label="Observed (German / Taiwan)"><strong>1.000 / 1.000</strong></td>
+<td data-label="Verdict">Harness can see leakage</td>
+</tr>
+<tr>
+<td data-label="Control">Null probe — labels permuted</td>
+<td data-label="Expected">AUC ≈ 0.5</td>
+<td data-label="Observed (German / Taiwan)"><strong>0.492 / 0.491</strong></td>
+<td data-label="Verdict">Harness invents no signal</td>
+</tr>
+<tr>
+<td data-label="Control">Column audit — max |corr| with label</td>
+<td data-label="Expected">&lt; 0.99</td>
+<td data-label="Observed (German / Taiwan)"><strong>0.351 / 0.325</strong>, no flags</td>
+<td data-label="Verdict">No duplicate label column</td>
+</tr>
+<tr>
+<td data-label="Control">Constant scorer</td>
+<td data-label="Expected">KS = 0, AP = prevalence</td>
+<td data-label="Observed (German / Taiwan)"><strong>0.000 / 0.221</strong></td>
+<td data-label="Verdict">Tie handling correct</td>
+</tr>
+</tbody>
+</table></div>
+<p>The column audit is not ceremony: <strong><code>default_next_month</code> in the Taiwan pack restates the label</strong>. It
+is excluded by name in <code>protocol.py</code> and <code>controls.py</code>, and the probe proves the exclusion would be
+caught if it were ever dropped from the exclusion list.</p>
+<hr />
+<h2 id="5-calibration-the-duty-that-separates-risk-from-fraud">5. Calibration — the duty that separates risk from fraud</h2>
+<p>A fraud score can be a ranking: the alert queue is sorted, and nobody prices a transaction from it.
+A default probability is <strong>used as a number</strong> — it sets pricing, provisioning and capital. A model
+that ranks well but reports 0.40 when the truth is 0.20 is not a risk model, it is a ranking with a
+number attached.</p>
+<p>The reference model demonstrates the failure, on the official harness, today:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>German, official OOF</th>
+<th style="text-align: right;">ROC-AUC</th>
+<th style="text-align: right;">Brier</th>
+<th style="text-align: right;">Brier skill</th>
+<th style="text-align: right;">ECE</th>
+<th style="text-align: right;">Calibration slope</th>
+<th style="text-align: right;">Intercept</th>
+<th style="text-align: right;">Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="German, official OOF">Reference, raw output</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.771</td>
+<td style="text-align: right;" data-label="Brier">0.180</td>
+<td style="text-align: right;" data-label="Brier skill">0.143</td>
+<td style="text-align: right;" data-label="ECE">0.118</td>
+<td style="text-align: right;" data-label="Calibration slope"><strong>0.409</strong></td>
+<td style="text-align: right;" data-label="Intercept">−0.232</td>
+<td style="text-align: right;" data-label="Cost">0.673</td>
+</tr>
+<tr>
+<td data-label="German, official OOF">Reference, Platt-recalibrated</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.769</td>
+<td style="text-align: right;" data-label="Brier"><strong>0.166</strong></td>
+<td style="text-align: right;" data-label="Brier skill"><strong>0.209</strong></td>
+<td style="text-align: right;" data-label="ECE"><strong>0.033</strong></td>
+<td style="text-align: right;" data-label="Calibration slope"><strong>1.037</strong></td>
+<td style="text-align: right;" data-label="Intercept">0.024</td>
+<td style="text-align: right;" data-label="Cost"><strong>0.582</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>A slope of <strong>0.41</strong> means the raw probabilities are roughly 2.4× too confident in their spread; ECE
+0.118 means an 11.8-point average gap between predicted and observed risk. Recall is <em>unchanged</em>
+(0.267 both ways) because Platt is monotone — the ranking was never the problem, and only a
+calibration metric sees the defect. After recalibration the slope is 1.04 and the average cost falls
+from 0.673 to 0.582 per applicant: <strong>13.5 % of the operating cost was a calibration error, not a
+discrimination error.</strong></p>
+<p>Taiwan tells the milder version: raw slope 0.900, Brier 0.1348 against base-rate 0.1723, ECE 0.0143 —
+already close to calibrated, and Platt moves it to slope 1.062 without improving Brier. The lesson is
+that calibration quality is corpus-dependent and cannot be assumed in either direction.</p>
+<p><strong>The protocol, frozen:</strong></p>
+<ol>
+<li>Platt scaling is fitted on <strong>inner out-of-fold</strong> scores inside the training folds only.</li>
+<li>It is applied to the held-out fold, never refitted on it (V4 voids the run).</li>
+<li>Both raw and recalibrated numbers are published side by side. Reporting only the recalibrated
+   number hides a model defect; reporting only the raw number hides a usable PD.</li>
+<li>Gate <strong>G2</strong>: Brier ≤ base-rate Brier − 0.01 <strong>and</strong> slope ∈ [0.80, 1.25] <strong>and</strong> |intercept| ≤ 0.10.
+   A model that fails G2 may still be reported for R1 (ranking) — but it is <strong>not</strong> a PD and the
+   verdict says so.</li>
+</ol>
+<hr />
+<h2 id="6-power-what-each-benchmark-can-decide">6. Power — what each benchmark can decide</h2>
+<p>Bootstrap of the frozen out-of-fold reference predictions, 1,000 resamples, seed 20261111. Full
+receipt in <code>out/power.json</code>.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Evaluation set</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">defaults</th>
+<th style="text-align: right;">SE(AUC)</th>
+<th style="text-align: right;">95 % CI half-width</th>
+<th style="text-align: right;">MDE vs a model (80 %)</th>
+<th style="text-align: right;">power of a 0.02 gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Evaluation set">Taiwan, pooled OOF</td>
+<td style="text-align: right;" data-label="n">30,000</td>
+<td style="text-align: right;" data-label="defaults">6,636</td>
+<td style="text-align: right;" data-label="SE(AUC)">0.0035</td>
+<td style="text-align: right;" data-label="95 % CI half-width">±0.007</td>
+<td style="text-align: right;" data-label="MDE vs a model (80 %)"><strong>0.014</strong></td>
+<td style="text-align: right;" data-label="power of a 0.02 gap"><strong>0.981</strong></td>
+</tr>
+<tr>
+<td data-label="Evaluation set">Taiwan, frozen holdout</td>
+<td style="text-align: right;" data-label="n">6,000</td>
+<td style="text-align: right;" data-label="defaults">1,327</td>
+<td style="text-align: right;" data-label="SE(AUC)">0.0075</td>
+<td style="text-align: right;" data-label="95 % CI half-width">±0.015</td>
+<td style="text-align: right;" data-label="MDE vs a model (80 %)"><strong>0.030</strong></td>
+<td style="text-align: right;" data-label="power of a 0.02 gap">0.470</td>
+</tr>
+<tr>
+<td data-label="Evaluation set">German, pooled OOF</td>
+<td style="text-align: right;" data-label="n">1,000</td>
+<td style="text-align: right;" data-label="defaults">300</td>
+<td style="text-align: right;" data-label="SE(AUC)">0.0159</td>
+<td style="text-align: right;" data-label="95 % CI half-width">±0.030</td>
+<td style="text-align: right;" data-label="MDE vs a model (80 %)"><strong>0.063</strong></td>
+<td style="text-align: right;" data-label="power of a 0.02 gap">0.142</td>
+</tr>
+<tr>
+<td data-label="Evaluation set">German, single fold</td>
+<td style="text-align: right;" data-label="n">100</td>
+<td style="text-align: right;" data-label="defaults">30</td>
+<td style="text-align: right;" data-label="SE(AUC)">0.0417</td>
+<td style="text-align: right;" data-label="95 % CI half-width">±0.082</td>
+<td style="text-align: right;" data-label="MDE vs a model (80 %)"><strong>0.165</strong></td>
+<td style="text-align: right;" data-label="power of a 0.02 gap">0.053</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Read it as three sentences.</strong></p>
+<ol>
+<li><strong>Taiwan can decide a 0.02 AUC difference</strong> (power 0.98). That is the only evaluation set on this
+   lane that can support "the base beats the reference" or "it does not".</li>
+<li><strong>German cannot</strong> (power 0.14). Its official harness is the better-established instrument and the
+   weaker measuring one; a verdict read off German is a coin flip with a citation.</li>
+<li><strong>A single fold is never quoted.</strong> Fold 0 of German scores AUC <strong>0.844</strong> against <strong>0.771</strong> pooled —
+   the most flattering cell in the battery, and an accident of 30 positives in 100 rows. Per-fold
+   spread is 0.696–0.844 (SD 0.047) on German against 0.767–0.788 (SD 0.008) on Taiwan.</li>
+</ol>
+<p>This is the fraud lane's lesson applied before the mistake is made: a gate read as a <em>model
+comparison</em> at low power is not a test. The fraud lane discovered that a +0.10 PR-AUC gate had 36 %
+power; here the number is written down <strong>before</strong> the run, so no future verdict can quietly read the
+floor as a win.</p>
+<hr />
+<h2 id="7-the-base-shortlist-small-models-under-5-b">7. The base shortlist — small models, under 5 B</h2>
+<p>The 5 B rule is the programme's. Every parameter count and licence for the Hub models below was read
+from the Hugging Face API on <strong>2026-11-11</strong>, not from a paper or a blog.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Model</th>
+<th style="text-align: right;">Params</th>
+<th>Licence</th>
+<th>Gated</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Role"><strong>Base</strong></td>
+<td data-label="Model"><code>Qwen/Qwen3-4B-Instruct-2507</code></td>
+<td style="text-align: right;" data-label="Params">4,022,468,096</td>
+<td data-label="Licence">Apache-2.0</td>
+<td data-label="Gated">No</td>
+<td data-label="Verdict"><strong>Adopted</strong></td>
+</tr>
+<tr>
+<td data-label="Role">Second-family verifier</td>
+<td data-label="Model"><code>microsoft/Phi-4-mini-instruct</code></td>
+<td style="text-align: right;" data-label="Params">3,836,021,760</td>
+<td data-label="Licence">MIT</td>
+<td data-label="Gated">No</td>
+<td data-label="Verdict"><strong>Adopted for Phase 4</strong></td>
+</tr>
+<tr>
+<td data-label="Role">Throughput fallback</td>
+<td data-label="Model"><code>Qwen/Qwen3-1.7B</code></td>
+<td style="text-align: right;" data-label="Params">2,031,739,904</td>
+<td data-label="Licence">Apache-2.0</td>
+<td data-label="Gated">No</td>
+<td data-label="Verdict">Shortlisted — a documented departure if used</td>
+</tr>
+<tr>
+<td data-label="Role">Alternative base</td>
+<td data-label="Model"><code>HuggingFaceTB/SmolLM3-3B</code></td>
+<td style="text-align: right;" data-label="Params">3,075,098,624</td>
+<td data-label="Licence">Apache-2.0</td>
+<td data-label="Gated">No</td>
+<td data-label="Verdict">Shortlisted, not adopted</td>
+</tr>
+<tr>
+<td data-label="Role">Text encoder</td>
+<td data-label="Model"><code>answerdotai/ModernBERT-base</code></td>
+<td style="text-align: right;" data-label="Params">149,655,232</td>
+<td data-label="Licence">Apache-2.0</td>
+<td data-label="Gated">No</td>
+<td data-label="Verdict"><strong>Not applicable</strong> — neither risk corpus has a text field</td>
+</tr>
+<tr>
+<td data-label="Role">Tabular foundation model</td>
+<td data-label="Model"><code>Prior-Labs/TabPFN-v2-clf</code></td>
+<td style="text-align: right;" data-label="Params">not published in Hub metadata</td>
+<td data-label="Licence">Prior Labs 1.1 (Apache-2.0 + attribution)</td>
+<td data-label="Gated">No</td>
+<td data-label="Verdict"><strong>Reference control only</strong></td>
+</tr>
+<tr>
+<td data-label="Role">Competitor-class reference</td>
+<td data-label="Model">HistGradientBoosting (scikit-learn)</td>
+<td style="text-align: right;" data-label="Params">—</td>
+<td data-label="Licence">BSD-3</td>
+<td data-label="Gated">—</td>
+<td data-label="Verdict"><strong>Reference row</strong> (measured)</td>
+</tr>
+<tr>
+<td data-label="Role">Excluded</td>
+<td data-label="Model"><code>meta-llama/Llama-3.2-3B-Instruct</code></td>
+<td style="text-align: right;" data-label="Params">3,212,749,824</td>
+<td data-label="Licence">Llama 3.2 community</td>
+<td data-label="Gated"><strong>manual</strong></td>
+<td data-label="Verdict">No measured upside; gated + non-OSI adds legal review</td>
+</tr>
+<tr>
+<td data-label="Role">Excluded</td>
+<td data-label="Model"><code>google/gemma-3-4b-it</code></td>
+<td style="text-align: right;" data-label="Params">4,300,079,472</td>
+<td data-label="Licence">Gemma terms</td>
+<td data-label="Gated"><strong>manual</strong></td>
+<td data-label="Verdict">Same, plus custom use restrictions</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="71-why-qwen3-4b-and-what-would-overturn-it">7.1 Why Qwen3-4B, and what would overturn it</h3>
+<p>Three reasons, in order of weight:</p>
+<ol>
+<li><strong>One stack.</strong> The definitive report §10.4 forbids re-deciding the base per training. The fraud
+   lane already measured and adopted Qwen3-4B; a second base for the second model would create two
+   stacks, two tokenizer behaviours, two sets of prompt hashes, and twice the harness surface.</li>
+<li><strong>It fits the job's scoring path.</strong> A decoder that gives a clean two-token distribution at a fixed
+   prefix is what R1–R3 need; the fallback 1.7 B is the same architecture and protocol, so a swap
+   would be a documented departure, not a redesign.</li>
+<li><strong>Licence and size clear both gates</strong> — Apache-2.0, ungated, 4.02 B.</li>
+</ol>
+<p><strong>Falsification, written before the run.</strong> If the base's calibrated Brier on the German official row
+does not beat the base-rate Brier (0.210), it is not a probability model at all, and no amount of
+post-hoc calibration rescues a model whose ranking is noise. If it beats the base-rate Brier but
+fails G2's slope band, the base is a ranker and the <em>risk product</em> cannot be the language model — the
+scorer stays the GBM and the model's job becomes explanation only. That is decision row <strong>D-R2</strong>, and
+it is the owner's, not this packet's.</p>
+<p><strong>On TabPFN.</strong> It is a genuinely small tabular foundation model and would be a fair <em>reference</em> on
+both corpora — small-data accuracy is its design point, and both corpora are small. It is not
+adopted as the trained model: it is a predictor, not a language model, it cannot emit a reason code,
+and its licence (Apache-2.0 <strong>plus an attribution requirement</strong>) has not been cleared for shipping.
+It belongs in the reference row set beside the GBM once compute exists, and the packet says so rather
+than quietly omitting it.</p>
+<h3 id="72-one-base-two-jobs-the-shortlist-across-the-lane">7.2 One base, two jobs — the shortlist across the lane</h3>
+<p>The owner's rule is that each model gets its own packet, not that each model gets its own stack.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Scored when</th>
+<th>Base</th>
+<th>Headline metric</th>
+<th>Second metric</th>
+<th>What the base must not do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Job"><strong>Credit Fraud</strong> (Model 1)</td>
+<td data-label="Scored when">per transaction, 0.17 % base rate</td>
+<td data-label="Base"><code>Qwen3-4B-Instruct-2507</code></td>
+<td data-label="Headline metric">PR-AUC, recall @ 1 % FPR</td>
+<td data-label="Second metric">ROC-AUC</td>
+<td data-label="What the base must not do">Miss fraud at a staffable alert volume</td>
+</tr>
+<tr>
+<td data-label="Job"><strong>Credit Risk</strong> (Model 2)</td>
+<td data-label="Scored when">per application, 4.8–30 % base rate</td>
+<td data-label="Base"><code>Qwen3-4B-Instruct-2507</code></td>
+<td data-label="Headline metric">ROC-AUC</td>
+<td data-label="Second metric">Brier + calibration slope</td>
+<td data-label="What the base must not do">Report a probability that is not one</td>
+</tr>
+</tbody>
+</table></div>
+<p>Same weights, same scoring path family, different decision rule and different measures. That is the
+whole point of the split: the model is shared to keep one stack, the <em>measurement</em> is not shared
+because the jobs are not the same job. If risk's calibration gate (G2) fails, the risk model changes
+role — ranker and explainer, with the GBM scoring — and the stack does not change (D-R2).</p>
+<p>The only size move that stays inside the protocol is <code>Qwen3-1.7B</code>, which keeps the architecture and
+the prompt format and halves the inference cost. It is shortlisted rather than adopted because the
+lane's compute constraint is one 4 B model, not two, and a 1.7 B base would need its own measured row
+to justify the swap — which is exactly the kind of unmeasured change this packet exists to prevent.</p>
+<hr />
+<h2 id="8-what-the-base-must-beat">8. What the base must beat</h2>
+<p>The reference is a gradient-boosted model on the same folds with the same engine the fraud lane used
+(<code>HistGradientBoostingClassifier</code>, seed 20261111, 300 iterations). It is a <strong>control</strong>, not a
+contender: it is the bar the 4 B model must clear to be worth its inference cost, and the row that
+makes "the model learned something" a measurable claim rather than a feeling.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Row</th>
+<th>Protocol</th>
+<th style="text-align: right;">ROC-AUC</th>
+<th style="text-align: right;">PR-AUC</th>
+<th style="text-align: right;">KS</th>
+<th style="text-align: right;">Brier (calibrated)</th>
+<th style="text-align: right;">Recall @ 10 % decline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Row">Reference, German</td>
+<td data-label="Protocol"><strong>official</strong> OpenML task 31</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.771</td>
+<td style="text-align: right;" data-label="PR-AUC">0.622</td>
+<td style="text-align: right;" data-label="KS">0.401</td>
+<td style="text-align: right;" data-label="Brier (calibrated)">0.166</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.267</td>
+</tr>
+<tr>
+<td data-label="Row">Reference, Taiwan</td>
+<td data-label="Protocol">lane protocol, OOF</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.779</td>
+<td style="text-align: right;" data-label="PR-AUC">0.556</td>
+<td style="text-align: right;" data-label="KS">0.428</td>
+<td style="text-align: right;" data-label="Brier (calibrated)">0.135</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">0.316</td>
+</tr>
+<tr>
+<td data-label="Row">Reference, Taiwan</td>
+<td data-label="Protocol">lane protocol, holdout</td>
+<td style="text-align: right;" data-label="ROC-AUC">0.785</td>
+<td style="text-align: right;" data-label="PR-AUC">0.567</td>
+<td style="text-align: right;" data-label="KS">0.434</td>
+<td style="text-align: right;" data-label="Brier (calibrated)">—</td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline">—</td>
+</tr>
+<tr>
+<td data-label="Row"><strong>Base, German</strong></td>
+<td data-label="Protocol">official</td>
+<td style="text-align: right;" data-label="ROC-AUC"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="PR-AUC"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="KS"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="Brier (calibrated)"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline"><strong>UNMEASURED</strong></td>
+</tr>
+<tr>
+<td data-label="Row"><strong>Base, Taiwan</strong></td>
+<td data-label="Protocol">lane protocol</td>
+<td style="text-align: right;" data-label="ROC-AUC"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="PR-AUC"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="KS"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="Brier (calibrated)"><strong>UNMEASURED</strong></td>
+<td style="text-align: right;" data-label="Recall @ 10 % decline"><strong>UNMEASURED</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Author-reported competitor figures</strong> — the Home Credit leaderboard's top solutions are around 0.80
+ROC-AUC. This packet has <strong>not verified</strong> that figure: the competition's evaluation page did not
+render for an anonymous fetch and the API returns 401. It is recorded as an unverified bar to
+reproduce later, never as a number this lane quotes as ours.</p>
+<hr />
+<h2 id="9-the-explanation-duty-the-capability-that-decides-whether-this-model-has-a-job">9. The explanation duty — the capability that decides whether this model has a job</h2>
+<p>Adverse-action explanation is not a nice-to-have in credit; it is the legal condition of declining an
+application. The Recipe's rule is brutal and correct: <em>home-grown controls belong to the DATA side
+only — they never produce a model score.</em> A SHAP-agreement diagnostic is a model-side home-grown
+check. So it is recorded as a <strong>diagnostic</strong>, excluded from every score table, and the capability
+publishes as UNMEASURED.</p>
+<p>What would measure it: the <strong>FICO HELOC xML challenge</strong>, the one public benchmark built for exactly
+this question — reason codes on a credit-decline task. It cannot be used today, for two independent
+reasons:</p>
+<ol>
+<li><strong>Licence.</strong> The corpus's licence is recorded as unverified in the pack register; the HF mirror's
+   bare <code>cc</code> is not a licence, and the FICO challenge terms have not been read. The Recipe's Phase 4
+   rule is absolute: a record whose licence cannot be proven is dropped before the packet, never
+   discovered mid-run.</li>
+<li><strong>Protocol.</strong> Even with a licence, the challenge's official scoring path is the challenge's; an
+   approximation of it is a variant protocol, and a variant protocol's number is discarded.</li>
+</ol>
+<p><strong>The consequence, stated plainly:</strong> if explanation is the product — and on this lane it is the only
+capability a GBM cannot have — then the Recipe cannot currently certify the product. That is not a
+reason to fake a number; it is a reason to put the licence question to the owner as a decision row
+(<strong>D-R2/D-R4</strong>) and to keep measuring R1–R3 in the meantime.</p>
+<p>One thing is measurable without the benchmark and is worth stating: <strong>the reason channel and the
+verdict channel share one record format</strong> (<code>{"risk": " default", "reasons": […]}</code>), so a model trained
+on reasons cannot drift from the format its verdict is scored in. That is the same format-match
+discipline the fraud lane learned the hard way, applied before the training run rather than after.</p>
+<hr />
+<h2 id="10-how-the-base-will-be-measured-the-run">10. How the base will be measured — the run</h2>
+<p>Fixed before any data work, in this order. <strong>No step is optional and no step may be reordered.</strong></p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>Gate</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#">0</td>
+<td data-label="Step"><code>validate_metrics.py</code> → PASS</td>
+<td data-label="Gate">metric engine parity &lt; 1e-9</td>
+<td data-label="Cost">seconds</td>
+</tr>
+<tr>
+<td data-label="#">1</td>
+<td data-label="Step"><code>split.py</code> → join proof + fold hashes</td>
+<td data-label="Gate">refuses on a failed OpenML join</td>
+<td data-label="Cost">seconds</td>
+</tr>
+<tr>
+<td data-label="#">2</td>
+<td data-label="Step"><code>protocol.py --check</code> → schema match</td>
+<td data-label="Gate">refuses if the pack gains or loses a column</td>
+<td data-label="Cost">seconds</td>
+</tr>
+<tr>
+<td data-label="#">3</td>
+<td data-label="Step"><strong>G0 tokenizer check</strong> — both verdict tokens are one token</td>
+<td data-label="Gate"><strong>blocks the run</strong></td>
+<td data-label="Cost">minutes</td>
+</tr>
+<tr>
+<td data-label="#">4</td>
+<td data-label="Step">Pin the Hub revision; record it in the receipt</td>
+<td data-label="Gate">G5 identity</td>
+<td data-label="Cost">minutes</td>
+</tr>
+<tr>
+<td data-label="#">5</td>
+<td data-label="Step">Score German, all 1,000 rows, one forward pass each</td>
+<td data-label="Gate">coverage ≥ 0.98</td>
+<td data-label="Cost">~1 GPU-minute</td>
+</tr>
+<tr>
+<td data-label="#">6</td>
+<td data-label="Step">Score Taiwan holdout, 6,000 rows</td>
+<td data-label="Gate">coverage ≥ 0.98</td>
+<td data-label="Cost">~5–15 GPU-minutes</td>
+</tr>
+<tr>
+<td data-label="#">7</td>
+<td data-label="Step">Determinism: 200 rows scored twice, identical</td>
+<td data-label="Gate">V3</td>
+<td data-label="Cost">minutes</td>
+</tr>
+<tr>
+<td data-label="#">8</td>
+<td data-label="Step"><code>evaluate.py</code> → R1–R3 numbers, raw and calibrated</td>
+<td data-label="Gate">G1–G4</td>
+<td data-label="Cost">seconds</td>
+</tr>
+<tr>
+<td data-label="#">9</td>
+<td data-label="Step">Publish with the loss mechanisms and UNMEASURED rows intact</td>
+<td data-label="Gate">—</td>
+<td data-label="Cost">—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>GPU budget, written before the stage.</strong> One 4 B model at bf16, batched: <strong>20–40 rows/s</strong> single
+stream, <strong>200–400 rows/s</strong> batched, on one A100-class GPU. The whole battery is 7,000 scored rows —
+<strong>under 0.1 GPU-hour</strong>, call it 1 GPU-hour with queueing and a re-run. This is an <em>estimate</em>, and the
+Recipe requires the estimate before the stage: <strong>stop condition — if measured batched throughput is
+below 50 rows/s, stop and report the throughput rather than burning GPU-days.</strong> A full OOF re-scoring
+of Taiwan (30,000 rows × 2 repeats) would be ~1–2 GPU-hours and is not needed for Phase 0.</p>
+<p><strong>What voids the run:</strong> a split or prompt hash mismatch (V2); a determinism failure (V3); calibration
+fitted on evaluation rows (V4); a coverage below 0.98 (G5); a base that fails G1 (no measurable
+skill — the run is not void, the verdict is "no skill").</p>
+<p><strong>What the run does not do:</strong> it does not choose the base (D-R1), does not start training, does not
+touch the corpus, and does not settle whether explanation is the product (D-R2).</p>
+<hr />
+<h2 id="11-decision-rows-the-owners-not-this-packets">11. Decision rows — the owner's, not this packet's</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Decision</th>
+<th>Options</th>
+<th>What it changes</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>D-R1</strong></td>
+<td data-label="Decision">Confirm the base</td>
+<td data-label="Options">Qwen3-4B (one stack) · Qwen3-1.7B (cheaper) · SmolLM3-3B</td>
+<td data-label="What it changes">Which model gets the GPU hours</td>
+<td data-label="Recommendation"><strong>Qwen3-4B</strong> — one stack, already the fraud base</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R2</strong></td>
+<td data-label="Decision">Is explanation the product?</td>
+<td data-label="Options">PD scorer · PD + reasons · reasons only</td>
+<td data-label="What it changes">Whether R4's UNMEASURED state is gating</td>
+<td data-label="Recommendation">Decide <strong>before</strong> training, not after</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R3</strong></td>
+<td data-label="Decision">Home Credit access</td>
+<td data-label="Options">Accept Kaggle rules on one account</td>
+<td data-label="What it changes">Unlocks the only large public risk benchmark</td>
+<td data-label="Recommendation">Do it — it is the difference between a 0.014 and a ~0.001 MDE</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R4</strong></td>
+<td data-label="Decision">HELOC licence</td>
+<td data-label="Options">Read the FICO challenge terms</td>
+<td data-label="What it changes">Unlocks R4, the only capability that justifies an LLM</td>
+<td data-label="Recommendation">Read them before any explanation claim is made</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R5</strong></td>
+<td data-label="Decision">Confirm G2/G4 thresholds</td>
+<td data-label="Options">As proposed in the registration</td>
+<td data-label="What it changes">Whether a ratio-only model can pass</td>
+<td data-label="Recommendation">Confirm or amend <strong>before</strong> the run</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R6</strong></td>
+<td data-label="Decision">Benchmark primacy</td>
+<td data-label="Options">German (official) · Taiwan (decisive) · both, named</td>
+<td data-label="What it changes">Which number a verdict quotes</td>
+<td data-label="Recommendation">Both, named — never one without the other</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="12-blockers">12. Blockers</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Blocker</th>
+<th>Owner</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>B-5</strong></td>
+<td data-label="Blocker">No GPU/compute access</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect">The base row cannot exist; everything above it is staging</td>
+</tr>
+<tr>
+<td data-label="#"><strong>B-6</strong></td>
+<td data-label="Blocker"><code>FAILURE-CORPUS.md</code> (47 rules) not in this workspace</td>
+<td data-label="Owner">Ronin</td>
+<td data-label="Effect">Required pre-flight input still missing</td>
+</tr>
+<tr>
+<td data-label="#"><strong>B-7</strong></td>
+<td data-label="Blocker">No second agent from a different model family</td>
+<td data-label="Owner">Ronin</td>
+<td data-label="Effect">Phase 4 gate unmet — naming Phi-4-mini as the <em>model</em> does not supply the <em>agent</em></td>
+</tr>
+<tr>
+<td data-label="#"><strong>B-9</strong></td>
+<td data-label="Blocker">Corpora from UCI/OpenML, not Hugging Face</td>
+<td data-label="Owner">Ronin</td>
+<td data-label="Effect">Framework download rule; model downloads comply</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R-05</strong></td>
+<td data-label="Blocker">Home Credit licence/rules unaccepted</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect">The 307k-row benchmark is UNMEASURED</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R-06</strong></td>
+<td data-label="Blocker">HELOC licence unproven</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect">R4, the explanation duty, is UNMEASURED</td>
+</tr>
+</tbody>
+</table></div>
+<p>None of these is a reason to build a corpus first. The Recipe's gate is explicit: measurement debt
+blocks data work, it does not trail it.</p>
+<hr />
+<h2 id="13-receipts-and-reproduction">13. Receipts and reproduction</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Artefact</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/out/metrics_validation.json"><code>phase0-risk/out/metrics_validation.json</code></a></td>
+<td data-label="What it proves">AUC/AP/KS/Brier parity vs scikit-learn <strong>1.1e-16</strong>; calibration vs an independent MLE <strong>5.7e-7</strong>; constant scorer KS 0, AP = prevalence</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/out/split_report.json"><code>phase0-risk/out/split_report.json</code></a></td>
+<td data-label="What it proves">OpenML task-31 join (0 mismatches, 30/100 stratification), fold hashes, Taiwan holdout counts</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/out/controls.json"><code>phase0-risk/out/controls.json</code></a></td>
+<td data-label="What it proves">Trivial rows, reference rows raw and calibrated, leak probe 1.000, null probe 0.492/0.491, column audit</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/out/power.json"><code>phase0-risk/out/power.json</code></a></td>
+<td data-label="What it proves">SE, CI and MDE per evaluation set; power of a 0.02 AUC gap</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/out/protocol.json"><code>phase0-risk/out/protocol.json</code></a></td>
+<td data-label="What it proves">Schema match, template/prefix hashes, rendered fixtures, tokenizer check PENDING</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/out/oof_german.csv"><code>phase0-risk/out/oof_german.csv</code></a> · <a href="phase0-risk/out/oof_taiwan.csv"><code>oof_taiwan.csv</code></a></td>
+<td data-label="What it proves">Per-row reference scores for the paired comparison when the base exists</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase0-risk/preregistration.json"><code>phase0-risk/preregistration.json</code></a></td>
+<td data-label="What it proves">The frozen registration, machine-readable</td>
+</tr>
+</tbody>
+</table></div>
+<p>Reproduce the whole packet's numbers in about three minutes on a laptop, no GPU:</p>
+<pre><code class="language-bash">cd credit/phase0-risk
+export PYTHONPATH=../.pylibs
+python3 validate_metrics.py &amp;&amp; python3 split.py &amp;&amp; python3 controls.py &amp;&amp; python3 power.py &amp;&amp; python3 protocol.py --check
+</code></pre>
+<p>The mock base run exists to prove the plumbing (<code>run_base.py --corpus german --mock</code>); its output is
+stamped <strong>SHAPE TEST — NOT A SCORE</strong> and no number from it appears in this packet.</p>
+<hr />
+<h2 id="14-recipe-conformance">14. Recipe conformance</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Recipe clause</th>
+<th>Where it is satisfied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Recipe clause">Capability map before data work</td>
+<td data-label="Where it is satisfied">§2 — six rows, each with a named benchmark or an explicit "none public"</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Public benchmarks on official harnesses only</td>
+<td data-label="Where it is satisfied">§3 — OpenML task 31 is the official harness; Taiwan is <em>named</em> as non-official and never called a score</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">A variant protocol's number is discarded</td>
+<td data-label="Where it is satisfied">§3.2, §9 — no approximate challenge scoring, no home-grown explanation metric quoted</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Trivial baselines, computed</td>
+<td data-label="Where it is satisfied">§4.1 — five rows per corpus, including the 77.9 %-accurate null</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Power / MDE measured, not assumed</td>
+<td data-label="Where it is satisfied">§6 — bootstrap, 1,000 resamples, per evaluation set</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">UNMEASURED is a standing state</td>
+<td data-label="Where it is satisfied">§2 (R4–R6), §9, §12</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Licence and provenance per record</td>
+<td data-label="Where it is satisfied">§1, pack register R-01…R-04; Home Credit and HELOC refused for licence reasons</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Calibration is part of the measurement</td>
+<td data-label="Where it is satisfied">§5 — in-fold fit, raw and recalibrated published side by side, gate G2</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Decontaminate before splitting</td>
+<td data-label="Where it is satisfied">Inherited from the fraud engine; splits are folds of already-clean corpora, family/horizon rules from <code>pack/README</code> §7 apply at corpus build</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Training start is the owner's tap</td>
+<td data-label="Where it is satisfied">§10, §11 — no training is started, no pilot is pre-approved</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Format match (train = measure)</td>
+<td data-label="Where it is satisfied">§9, <code>protocol.py</code> — one record format, verdict field first, one hash</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Departures, named in writing.</strong> (1) The lane has no official harness for its decisive benchmark,
+so it pre-registers one and labels every number from it — a departure from "official harness only",
+forced by the absence of an official harness, recorded rather than hidden. (2) Calibration is
+measured as a first-class capability rather than a diagnostic, because the job requires a probability
+— this is stricter than the fraud lane, not looser.</p>
+<hr />
+<h2 id="15-revision-history">15. Revision history</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Rev</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Rev">1</td>
+<td data-label="Date">2026-11-11</td>
+<td data-label="Change">First risk packet. Base shortlist, capability map, metrics, calibration duty, power, frozen registration, harness with measured controls</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p><em>No training was started. No corpus was built. No model score was produced. The only numbers in this
+packet are data properties and reference-model controls, each with a receipt.</em></p>
+  <div class="footer">
+    <p><strong>Document provenance.</strong> Credit Risk Phase 0 packet, rev. 1, 11 November 2026,
+    CREDIT lane. Written from the consolidated Recipe v1 Phase 0 text, the frozen registration
+    <code>CREDIT-RISK-P0-PREREG-001</code>, the pack's licence register R-01…R-04, and the receipts
+    in <code>phase0-risk/out/</code>. Every number is either a property of the data or a reference-model
+    control; none is a base score.</p>
+    <p><strong>Revisions are recorded, never silently overwritten.</strong> No language model has been
+    scored on this lane. The OpenML join was proven twice and the first attempt (1-based rowids) failed
+    visibly; the failure is recorded in the split receipt rather than quietly corrected. D-R1…D-R6,
+    B-5, B-6, B-7, R-05 and R-06 remain open. The HTML edition is generated from the markdown by
+    <code>build_risk_guide.py</code>.</p>
+    <p class="up">CREDIT · Model 2 · Phase 0 · AITIUM INC</p>
+  </div>
+  </main>
+</div>
+</div>
+</body>
+</html>

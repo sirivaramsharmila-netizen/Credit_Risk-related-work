@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit Risk — Phase 2: sourcing, the licence register and per-record provenance · CREDIT lane</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --bg:#f4f2ec;
+    --ink:#15181c;
+    --body:#2b3138;
+    --muted:#697079;
+    --line:#dcdfd8;
+    --line-soft:#e9ebe5;
+    --accent:#1d5c46;
+    --accent-2:#2f7f62;
+    --accent-soft:#e9f1ec;
+    --amber:#8a5a12;
+    --amber-soft:#fdf4e5;
+    --red:#8c2f2f;
+    --red-soft:#fbeeed;
+    --blue:#22456f;
+    --blue-soft:#eaf0f7;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{
+    margin:0;background:var(--bg);color:var(--body);
+    font-family:var(--sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .shell{max-width:1240px;margin:0 auto;padding:0 30px 96px}
+  .layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:54px;align-items:start}
+  .layout > *{min-width:0}
+  main{min-width:0;max-width:100%}
+  @media (max-width:1040px){.layout{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}}
+
+  /* masthead */
+  header.mast{padding:58px 0 30px;border-bottom:1px solid var(--line);margin-bottom:38px}
+  .eyebrow{
+    font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:0 0 18px
+  }
+  h1{
+    font-family:var(--serif);font-weight:600;font-size:clamp(36px,4.6vw,56px);
+    line-height:1.06;letter-spacing:-.018em;color:var(--ink);margin:0 0 20px;max-width:20em
+  }
+  .deck{font-size:19px;line-height:1.55;color:#3c434b;max-width:44em;margin:0 0 26px}
+  .deck strong{color:var(--ink);font-weight:650}
+  .meta{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+    border-top:1px solid var(--line-soft);padding-top:18px;max-width:980px
+  }
+  @media (max-width:780px){.meta{grid-template-columns:repeat(2,1fr);gap:18px}}
+  .meta div{padding-right:18px}
+  .meta dt{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}
+  .meta dd{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+  .meta code{white-space:nowrap}
+
+  /* kpi */
+  .kpi{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin:0 0 14px;max-width:980px
+  }
+  .kpi::after{content:"";display:none;background:var(--paper)}
+  .kpi div{background:var(--paper);padding:14px 16px}
+  @media (max-width:780px){.kpi{grid-template-columns:repeat(2,1fr)}.kpi::after{display:block}}
+  .kpi .kv{font-family:var(--serif);font-size:25px;line-height:1.05;color:var(--ink);display:block;margin-bottom:3px}
+  .kpi .kl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .seal{font-size:12.5px;color:var(--amber);max-width:64em;margin:0 0 34px}
+  .seal span{color:var(--muted)}
+  .deck code{background:#eceae3;font-size:.86em}
+  .seal b{letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}
+
+  /* toc */
+  .toc{position:sticky;top:26px;padding-top:8px;font-size:13px}
+  .toc .toc-h{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .toc ol{list-style:none;margin:0;padding:0}
+  .toc li{margin:0 0 2px}
+  .toc a{
+    display:block;color:#414850;text-decoration:none;padding:5px 8px 5px 10px;
+    border-left:2px solid transparent;line-height:1.35
+  }
+  .toc a:hover{color:var(--accent);background:#efeee7;border-left-color:var(--accent-2)}
+  .toc .n{color:#9aa1a8;font-family:var(--mono);font-size:10.5px;margin-right:7px}
+
+  /* sections */
+  section{margin:0 0 58px;scroll-margin-top:22px}
+  .sec-kicker{
+    font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin:0 0 6px
+  }
+  h2{
+    font-family:var(--serif);font-size:33px;line-height:1.13;letter-spacing:-.012em;
+    color:var(--ink);font-weight:600;margin:0 0 20px;padding-bottom:14px;
+    border-bottom:1px solid var(--line)
+  }
+  h3{
+    font-family:var(--serif);font-size:21px;line-height:1.28;color:var(--ink);
+    font-weight:600;margin:34px 0 10px
+  }
+  h3.step-h{
+    display:flex;align-items:baseline;gap:12px;
+    background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:12px 16px;margin:28px 0 12px
+  }
+  .step-badge{
+    font-family:var(--mono);font-size:11.5px;color:var(--accent);background:var(--accent-soft);
+    border:1px solid #cfe0d5;padding:2px 6px;white-space:nowrap
+  }
+  p{margin:0 0 14px;max-width:48em}
+  ul,ol{margin:0 0 14px;padding-left:22px;max-width:48em}
+  li{margin:0 0 7px}
+  li::marker{color:#9aa1a8}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(29,92,70,.25)}
+  a:hover{border-bottom-color:var(--accent)}
+  code{font-family:var(--mono);font-size:.875em;background:#f0efe9;padding:1px 5px;border-radius:3px;color:#333a41}
+  strong{color:var(--ink)}
+  hr{border:none;border-top:1px solid var(--line);margin:0 0 34px}
+
+  /* callouts */
+  blockquote{
+    margin:24px 0;padding:17px 20px;background:var(--paper);
+    border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:2px
+  }
+  blockquote p{margin:0 0 8px;max-width:48em}
+  blockquote p:last-child{margin-bottom:0}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;max-width:100%;margin:0 0 24px;border:1px solid var(--line);background:var(--paper)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.46}
+  th{
+    text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#5a626a;
+    font-weight:650;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:bottom;
+    background:#fbfaf7
+  }
+  td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fbfaf7}
+  td code{white-space:normal;overflow-wrap:break-word}
+  @media (max-width:700px){
+    .tbl-wrap{border:none;background:transparent;overflow:visible}
+    .tbl-wrap table{display:block;width:100%}
+    .tbl-wrap thead{display:none}
+    .tbl-wrap tbody{display:block}
+    .tbl-wrap tr{display:block;border:1px solid var(--line);background:var(--paper);margin:0 0 10px}
+    .tbl-wrap td{display:block;padding:8px 13px;border-bottom:1px solid var(--line-soft);width:auto;text-align:left !important}
+    .tbl-wrap tr td:last-child{border-bottom:none}
+    .tbl-wrap td::before{
+      content:attr(data-label);display:block;font-size:9.5px;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--muted);font-weight:650;line-height:1.5;margin:0 0 3px
+    }
+    .tbl-wrap td[data-label=""]::before{display:none}
+    .tbl-wrap td code{white-space:normal}
+    .pill{white-space:normal}
+  }
+
+  /* code */
+  pre{
+    background:#151a1e;color:#dfe5e2;padding:16px 18px;border-radius:3px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;margin:0 0 20px
+  }
+  pre code{background:none;color:inherit;padding:0;font-size:inherit;white-space:pre}
+
+  /* pills */
+  .pill{
+    display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;padding:3px 7px;border-radius:2px;white-space:nowrap;
+    border:1px solid transparent;line-height:1.25
+  }
+  .pill.done{background:#e6f0e9;color:#1b5a43;border-color:#cfe0d5}
+  .pill.open{background:var(--amber-soft);color:#7d5210;border-color:#eedcb9}
+  .pill.stop{background:var(--red-soft);color:#7f2b2b;border-color:#eccfcd}
+  .pill.info{background:var(--blue-soft);color:var(--blue);border-color:#d3dfec}
+
+  /* footer */
+  .footer{border-top:1px solid var(--line);padding-top:22px;margin-top:26px;font-size:12.5px;color:var(--muted);max-width:64em}
+  .footer p{max-width:64em}
+  .up{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9aa1a8;margin-top:14px}
+
+  @media print{
+    body{background:#fff;font-size:10.5pt}
+    .shell{max-width:none;padding:0}
+    .layout{display:block}
+    .toc{display:none}
+    header.mast{padding-top:0}
+    section{page-break-inside:auto;margin-bottom:30px}
+    blockquote,.tbl-wrap,h3.step-h{page-break-inside:avoid}
+    h2,h3{page-break-after:avoid}
+    a{color:var(--ink);border-bottom:none}
+    pre{background:#f4f4ef;color:#222;border:1px solid #ddd;white-space:pre-wrap}
+    .tbl-wrap{overflow:visible;page-break-inside:avoid}
+    table{font-size:9pt}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="mast">
+  <p class="eyebrow">AITIUM INC · CREDIT lane · Model 2 · Phase 2 of 6 — sourcing and provenance</p>
+  <h1>Credit Risk — Phase 2: sourcing, the licence register and per-record provenance</h1>
+  <p class="deck">Eleven sources, three predicates, and one arithmetic result the lane has to face: the two corpora that can measure a verdict are the two that must never train. A register with evidence, a gate executed against the bytes, and a training gap stated in rows rather than adjectives.</p>
+  <dl class="meta">
+    <div><dt>Phase</dt><dd>2 — sourcing + provenance</dd></div>
+    <div><dt>Owner</dt><dd>Sharmila Sirivaram<br>CREDIT lane</dd></div>
+    <div><dt>Registration</dt><dd><code>CREDIT-RISK-P0-PREREG-001</code><br>frozen 2026-11-11</dd></div>
+    <div><dt>Issue</dt><dd>2026-11-11<br>packet rev. 1 · mirrors the .md</dd></div>
+  </dl>
+</header>
+
+<div class="kpi">
+  <div><span class="kv">11</span><span class="kl">Sources in the register</span></div>
+  <div><span class="kv">5</span><span class="kl">Admitted</span></div>
+  <div><span class="kv">31,000</span><span class="kl">Rows eval-only</span></div>
+  <div><span class="kv">0</span><span class="kl">Evidence-grade training rows</span></div>
+  <div><span class="kv">3,194</span><span class="kl">Rows after slicing · 30 positives</span></div>
+</div>
+<p class="seal"><span>Register: 11 sources</span> <b>Phase 2:</b> five admitted, two pending terms, three rejected and one
+out of scope. No corpus built, no row ingested.</p>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-h">Contents</p>
+    <div class="toc">
+<ul>
+<li><a href="#phase-2-sourcing-the-licence-register-and-per-record-provenance">Phase 2 — Sourcing, the licence register and per-record provenance</a><ul>
+<li><a href="#0-what-this-packet-covers-and-the-owners-instruction-applied-to-model-2">0. What this packet covers, and the owner's instruction applied to Model 2</a></li>
+<li><a href="#1-the-gate-in-three-predicates">1. The gate, in three predicates</a></li>
+<li><a href="#2-the-register-executed">2. The register, executed</a></li>
+<li><a href="#3-the-finding-a-benchmark-corpus-cannot-be-a-training-corpus">3. The finding: a benchmark corpus cannot be a training corpus</a></li>
+<li><a href="#4-the-one-clean-new-admission-r-08-and-exactly-what-it-is">4. The one clean new admission — R-08, and exactly what it is</a></li>
+<li><a href="#5-rejections-and-the-mirror-class">5. Rejections, and the mirror class</a></li>
+<li><a href="#6-track-c-the-pool-sliced">6. Track C — the pool, sliced</a></li>
+<li><a href="#7-track-b-generated-data-and-why-it-cannot-carry-this-model">7. Track B — generated data, and why it cannot carry this model</a></li>
+<li><a href="#8-per-record-provenance-the-stamp">8. Per-record provenance — the stamp</a></li>
+<li><a href="#9-coverage-against-the-phase-1-weakness-map">9. Coverage against the Phase 1 weakness map</a></li>
+<li><a href="#10-decision-rows">10. Decision rows</a></li>
+<li><a href="#11-blockers">11. Blockers</a></li>
+<li><a href="#12-receipts-and-reproduction">12. Receipts and reproduction</a></li>
+<li><a href="#13-recipe-conformance">13. Recipe conformance</a></li>
+<li><a href="#14-revision-history">14. Revision history</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  </nav>
+  <main>
+<h1 id="phase-2-sourcing-the-licence-register-and-per-record-provenance">Phase 2 — Sourcing, the licence register and per-record provenance</h1>
+<p><strong>Lane:</strong> CREDIT · <strong>Model:</strong> 2 — Credit Risk · <strong>Phase:</strong> 2 of 6
+<strong>Revision:</strong> 1 · <strong>Date:</strong> 11 November 2026 · <strong>Author:</strong> Sharmila Sirivaram
+<strong>Gate:</strong> per-record provenance (Recipe v1, Phase 2) · <strong>Register:</strong> <a href="phase2-risk/register.json"><code>phase2-risk/register.json</code></a>
+<strong>Evidence:</strong> <a href="phase2-risk/out/gate_report.json"><code>phase2-risk/out/gate_report.json</code></a> · <a href="phase2-risk/out/slices_polish.json"><code>slices_polish.json</code></a> · <a href="phase2-risk/out/candidate_laotse.json"><code>candidate_laotse.json</code></a>
+<strong>Status:</strong> 11 sources in the register. <strong>5 admitted, 2 pending terms, 3 rejected, 1 out of scope.</strong> No corpus built.</p>
+<blockquote>
+<p><strong>The one sentence.</strong> Phase 2 is where a corpus becomes admissible, and for this model the
+arithmetic comes out badly: the two corpora that can measure a verdict are the two that must never
+train, the 43,405-row training corpus narrows to 3,194 rows and 30 bankruptcies once sliced, and the
+one clean new admission is synthetic — so the honest output of this phase is a <strong>training gap</strong>,
+stated with numbers, not a corpus.</p>
+</blockquote>
+<hr />
+<h2 id="0-what-this-packet-covers-and-the-owners-instruction-applied-to-model-2">0. What this packet covers, and the owner's instruction applied to Model 2</h2>
+<p>The owner's Phase 2 instruction is written for the fraud model: <em>public fraud datasets only, each
+with a licence entry in a register and per-record provenance; published datasets are a permanently
+flagged class — labelled as dataset rows, never described as anything else.</em> The same rule applies here
+with the domain substituted — <strong>public credit-risk datasets only</strong> — and this packet keeps every part
+of it:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Instruction</th>
+<th>How it is applied here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Instruction">public datasets only</td>
+<td data-label="How it is applied here">every source is a publisher-hosted corpus; mirrors are a named rejection class (§5)</td>
+</tr>
+<tr>
+<td data-label="Instruction">licence entry in a register</td>
+<td data-label="How it is applied here">11 rows, each with the evidence line and the date it was read (§3)</td>
+</tr>
+<tr>
+<td data-label="Instruction">per-record provenance</td>
+<td data-label="How it is applied here">a frozen stamp, applied at ingest, one row per record (§6)</td>
+</tr>
+<tr>
+<td data-label="Instruction">published datasets are permanently flagged</td>
+<td data-label="How it is applied here"><code>origin_class = DATASET_ROW</code> on every record, forever; synthetic ones additionally carry <code>synthetic = true</code> and are never described as real applications (§7)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What Phase 2 is not.</strong> It is not the corpus. Nothing here has been ingested, split, decontaminated or
+trained on. Those are Phase 3, and they are gated on this phase's verdicts — which is why the negative
+result below matters more than the admissions.</p>
+<hr />
+<h2 id="1-the-gate-in-three-predicates">1. The gate, in three predicates</h2>
+<blockquote>
+<p>A record ships only when <strong>its own per-record data names the upstream corpus whose content it is</strong>,
+and the licence is that corpus's licence. Dataset-level licence, mixture-card licence and disclosed
+generation method do not count. Per-record subset/category labels <strong>do</strong> count as origin.</p>
+</blockquote>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Predicate</th>
+<th>Question</th>
+<th>Executed by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Predicate"><strong>P1 origin</strong></td>
+<td data-label="Question">can every record name its corpus, with a stamp applied at ingest rather than added later?</td>
+<td data-label="Executed by"><code>gate.py</code> — re-hashes the curated file, checks row counts, unique record ids and that a stamp is buildable</td>
+</tr>
+<tr>
+<td data-label="Predicate"><strong>P2 licence</strong></td>
+<td data-label="Question">does that corpus permit commercial training, with duties recorded?</td>
+<td data-label="Executed by">register evidence line, read at the publisher, dated</td>
+</tr>
+<tr>
+<td data-label="Predicate"><strong>P3 coverage</strong></td>
+<td data-label="Question">does it cover at least one weakness row from Phase 1?</td>
+<td data-label="Executed by">register <code>coverage</code> field, checked against W1–W9</td>
+</tr>
+</tbody>
+</table></div>
+<p>Verdicts are fixed: <code>ADMITTED</code> · <code>REJECTED</code> · <code>PENDING TERMS</code> · <code>OUT OF SCOPE</code>. <strong>Pending terms is
+never admissible</strong> — an auth-gated licence that has not been read is an unknown, not a maybe.</p>
+<p><strong>One addition this model needs that the fraud model did not.</strong> A risk corpus can be perfectly
+licensed and still unusable for training, because it is the <strong>benchmark</strong>. So the register carries a
+<code>role</code> column — <code>eval</code>, <code>train</code> or <code>none</code> — and <code>gate.py</code> computes <em>training-eligible rows</em> from it.
+Admissible and trainable are different verdicts, and the difference is the finding of this phase.</p>
+<hr />
+<h2 id="2-the-register-executed">2. The register, executed</h2>
+<p><code>gate.py</code> does not re-decide the verdicts. It executes them against the bytes, so a verdict cannot
+drift from the file it describes.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Corpus</th>
+<th>Licence</th>
+<th>Role</th>
+<th style="text-align: right;">Rows on disk</th>
+<th>Coverage</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>R-01</strong></td>
+<td data-label="Corpus">German Credit (UCI 144)</td>
+<td data-label="Licence">CC BY 4.0</td>
+<td data-label="Role"><strong>eval</strong></td>
+<td style="text-align: right;" data-label="Rows on disk">1,000</td>
+<td data-label="Coverage">W3, W7</td>
+<td data-label="Verdict"><strong>ADMITTED</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-02</strong></td>
+<td data-label="Corpus">Taiwan default (UCI 350)</td>
+<td data-label="Licence">CC BY 4.0</td>
+<td data-label="Role"><strong>eval</strong></td>
+<td style="text-align: right;" data-label="Rows on disk">30,000</td>
+<td data-label="Coverage">W1–W4, W7</td>
+<td data-label="Verdict"><strong>ADMITTED</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-03</strong></td>
+<td data-label="Corpus">Credit Approval (UCI 27)</td>
+<td data-label="Licence">CC BY 4.0</td>
+<td data-label="Role">train</td>
+<td style="text-align: right;" data-label="Rows on disk">690</td>
+<td data-label="Coverage">—</td>
+<td data-label="Verdict"><strong>ADMITTED</strong> (no coverage)</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-04</strong></td>
+<td data-label="Corpus">Polish bankruptcy (UCI 365)</td>
+<td data-label="Licence">CC BY 4.0</td>
+<td data-label="Role">train</td>
+<td style="text-align: right;" data-label="Rows on disk">43,405</td>
+<td data-label="Coverage">W5</td>
+<td data-label="Verdict"><strong>ADMITTED</strong> (corporate)</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-05</strong></td>
+<td data-label="Corpus">Home Credit Default Risk</td>
+<td data-label="Licence">unknown — 401</td>
+<td data-label="Role">train</td>
+<td style="text-align: right;" data-label="Rows on disk">0</td>
+<td data-label="Coverage">W1, W2, W8</td>
+<td data-label="Verdict"><strong>PENDING TERMS</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-06</strong></td>
+<td data-label="Corpus">Lending Club</td>
+<td data-label="Licence">unproven — mirrors disagree</td>
+<td data-label="Role">train</td>
+<td style="text-align: right;" data-label="Rows on disk">0</td>
+<td data-label="Coverage">W8</td>
+<td data-label="Verdict"><strong>REJECTED</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-07</strong></td>
+<td data-label="Corpus">FICO HELOC</td>
+<td data-label="Licence">unverified — bare <code>cc</code></td>
+<td data-label="Role">eval</td>
+<td style="text-align: right;" data-label="Rows on disk">0</td>
+<td data-label="Coverage">W6</td>
+<td data-label="Verdict"><strong>PENDING TERMS</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-08</strong></td>
+<td data-label="Corpus">Credit Risk Dataset (Kaggle <code>laotse</code>)</td>
+<td data-label="Licence"><strong>CC0 1.0</strong></td>
+<td data-label="Role">train</td>
+<td style="text-align: right;" data-label="Rows on disk">32,581 (inspected)</td>
+<td data-label="Coverage">W5</td>
+<td data-label="Verdict"><strong>ADMITTED</strong> (synthetic)</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-09</strong></td>
+<td data-label="Corpus">Give Me Some Credit</td>
+<td data-label="Licence">contradictory</td>
+<td data-label="Role">none</td>
+<td style="text-align: right;" data-label="Rows on disk">0</td>
+<td data-label="Coverage">—</td>
+<td data-label="Verdict"><strong>REJECTED</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-10</strong></td>
+<td data-label="Corpus">HMDA LAR</td>
+<td data-label="Licence">public</td>
+<td data-label="Role">none</td>
+<td style="text-align: right;" data-label="Rows on disk">0</td>
+<td data-label="Coverage">—</td>
+<td data-label="Verdict"><strong>OUT OF SCOPE</strong></td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-11</strong></td>
+<td data-label="Corpus">mirrors / re-uploads</td>
+<td data-label="Licence">labels never granted</td>
+<td data-label="Role">none</td>
+<td style="text-align: right;" data-label="Rows on disk">0</td>
+<td data-label="Coverage">—</td>
+<td data-label="Verdict"><strong>REJECTED</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Executed checks (summary of <code>out/gate_report.json</code>):</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Check">Curated file hashes match receipts</td>
+<td data-label="Result"><strong>4 / 4</strong> admitted in-pack corpora</td>
+</tr>
+<tr>
+<td data-label="Check">Record ids unique</td>
+<td data-label="Result"><strong>4 / 4</strong></td>
+</tr>
+<tr>
+<td data-label="Check">Per-record stamp buildable</td>
+<td data-label="Result"><strong>4 / 4</strong> in pack, plus R-08 inspected at source</td>
+</tr>
+<tr>
+<td data-label="Check">Rows available for evaluation</td>
+<td data-label="Result"><strong>31,000</strong> (R-01 + R-02)</td>
+</tr>
+<tr>
+<td data-label="Check">Rows eligible for training, in pack</td>
+<td data-label="Result"><strong>44,095</strong> — 43,405 corporate (R-04) + 690 policy rows (R-03)</td>
+</tr>
+<tr>
+<td data-label="Check">Rows eligible for training, pending ingest</td>
+<td data-label="Result"><strong>32,581</strong> — R-08, synthetic</td>
+</tr>
+<tr>
+<td data-label="Check">Admitted but covering no weakness row</td>
+<td data-label="Result"><strong>R-03</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Evidence re-checked at source today, 2026-11-11.</strong> Three candidates changed or confirmed:</p>
+<ul>
+<li><strong>R-05 Home Credit:</strong> <code>api/v1/competitions/data/list/home-credit-default-risk</code> returns <strong>HTTP 401</strong>
+  anonymously. The licence has still not been read. <code>PENDING TERMS</code>.</li>
+<li><strong>R-06 Lending Club:</strong> the two mirrors disagree on the same upstream file — <code>wordsforthewise</code>
+  declares <strong>CC0</strong>, <code>adarshsng</code> declares <strong>ODbL</strong>. A re-uploader's label cannot establish upstream
+  rights, so the verdict is unchanged: <strong>REJECTED at P2</strong>, not at P1 or P3.</li>
+<li><strong>R-07 HELOC:</strong> the Hugging Face mirror still declares <code>license: cc</code> with no version and no link. A
+  bare "cc" is not a licence. <code>PENDING TERMS</code>.</li>
+</ul>
+<hr />
+<h2 id="3-the-finding-a-benchmark-corpus-cannot-be-a-training-corpus">3. The finding: a benchmark corpus cannot be a training corpus</h2>
+<p>This is the phase's central result, and it is arithmetic rather than opinion.</p>
+<p>The lane's Phase 0 chose <strong>cross-validation</strong> for Taiwan (5 × 2 stratified folds) and the <strong>published
+10-fold file</strong> for German. Under either protocol, every row is an evaluation row in some fold. If a
+model is fine-tuned on the corpus and then evaluated on those folds, it has already seen every row it
+is scored on — the evaluation measures memorisation, not skill. The Recipe's decontamination rule
+(<em>zero benchmark examples in training data</em>) therefore consumes the whole corpus, not a test split.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Role</th>
+<th style="text-align: right;">Rows</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Corpus">R-01 German</td>
+<td data-label="Role"><strong>eval only</strong></td>
+<td style="text-align: right;" data-label="Rows">1,000</td>
+<td data-label="Why">official OpenML task 31, 10-fold</td>
+</tr>
+<tr>
+<td data-label="Corpus">R-02 Taiwan</td>
+<td data-label="Role"><strong>eval only</strong></td>
+<td style="text-align: right;" data-label="Rows">30,000</td>
+<td data-label="Why">lane protocol, 5 × 2 CV + holdout</td>
+</tr>
+<tr>
+<td data-label="Corpus">R-03 Credit Approval</td>
+<td data-label="Role">train</td>
+<td style="text-align: right;" data-label="Rows">690</td>
+<td data-label="Why">admissible, but 1987 policy labels — not a PD</td>
+</tr>
+<tr>
+<td data-label="Corpus">R-04 Polish</td>
+<td data-label="Role">train (corporate)</td>
+<td style="text-align: right;" data-label="Rows">43,405</td>
+<td data-label="Why">corporate distress, not consumer PD</td>
+</tr>
+<tr>
+<td data-label="Corpus">R-08 Kaggle CC0</td>
+<td data-label="Role">train (synthetic)</td>
+<td style="text-align: right;" data-label="Rows">32,581</td>
+<td data-label="Why">clean licence, synthetic applicant</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Net evidence-grade consumer-PD training rows available today: zero.</strong> Every number that could train
+a consumer PD model is either synthetic, off-mission (corporate), or a 690-row table of 1987 policy
+decisions; every number that could <em>measure</em> one is reserved for evaluation.</p>
+<p>That is not a dead end — it is a decision with three priced options (D-R11, §9):</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it costs</th>
+<th>What it buys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Option"><strong>A.</strong> Keep both benchmarks as eval-only</td>
+<td data-label="What it costs">needs a new corpus (R-05 or R-06) before any training</td>
+<td data-label="What it buys">the strongest measurement (MDE 0.014 AUC) survives intact</td>
+</tr>
+<tr>
+<td data-label="Option"><strong>B.</strong> Re-scope Taiwan to a single 80/20 holdout</td>
+<td data-label="What it costs">MDE rises <strong>0.014 → 0.030</strong> AUC; the 5 × 2 protocol dies and its receipt must be re-registered</td>
+<td data-label="What it buys">24,000 rows become trainable immediately</td>
+</tr>
+<tr>
+<td data-label="Option"><strong>C.</strong> Leave both eval-only and train nothing</td>
+<td data-label="What it costs">no trained model this cycle</td>
+<td data-label="What it buys">a zero-shot base row that is honest and measurable now</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Recommendation:</strong> run <strong>C</strong> first — the Phase 0 base row is zero-shot anyway and costs one GPU-hour —
+and decide <strong>A vs B</strong> only if that row shows skill worth training on. Option B is always available and
+its price is now written down, which is the point of pricing it before it is chosen.</p>
+<hr />
+<h2 id="4-the-one-clean-new-admission-r-08-and-exactly-what-it-is">4. The one clean new admission — R-08, and exactly what it is</h2>
+<p>R-08 is a Kaggle dataset published under <strong>CC0 1.0</strong>, verified at source today: the dataset view
+endpoint returns <code>CC0: Public Domain</code>, and the file downloads anonymously (HTTP 200, zip 376,518
+bytes). It passes P1 (per-record origin from row index and hash), P2 (CC0, no duties) and P3
+(W5 — it is the only corpus on disk with real missingness).</p>
+<p><strong>It is also synthetic, and the evidence is in the values.</strong> No lender could have issued these rows:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Observed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Check">Oldest applicant</td>
+<td data-label="Observed">age <strong>144</strong> (5 applicants over 100)</td>
+</tr>
+<tr>
+<td data-label="Check">Longest employment</td>
+<td data-label="Observed"><strong>123 years</strong>, in an applicant aged 22</td>
+</tr>
+<tr>
+<td data-label="Check">Employment longer than the applicant's life</td>
+<td data-label="Observed">2 rows</td>
+</tr>
+<tr>
+<td data-label="Check">Exact duplicate rows</td>
+<td data-label="Observed"><strong>165</strong></td>
+</tr>
+<tr>
+<td data-label="Check">Rows / defaults</td>
+<td data-label="Observed">32,581 / 7,108 (<strong>21.82 %</strong>)</td>
+</tr>
+<tr>
+<td data-label="Check">Missing cells</td>
+<td data-label="Observed">895 <code>person_emp_length</code>, 3,116 <code>loan_int_rate</code> (<strong>9.56 %</strong>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Under the owner's rule it is a <strong>published dataset</strong> and stays <code>origin_class = DATASET_ROW</code> forever,
+with <code>synthetic = true</code> on every record. It is admissible for training and <strong>not evidence-grade</strong>: a
+simulated applicant cannot certify a calibration claim about real borrowers, and a model trained on it
+inherits an age/employment distribution that no real portfolio has. Its honest use is narrow and
+useful — the missingness substrate for W5, and a robustness corpus, never a headline row.</p>
+<p><strong>Track C applied to it:</strong> 165 exact duplicates must be collapsed or family-grouped before any split,
+and the impossible-value rows (age &gt; 100, employment &gt; 60) should be quarantined rather than silently
+trained on. That is a slice decision, recorded here so Phase 3 inherits it.</p>
+<hr />
+<h2 id="5-rejections-and-the-mirror-class">5. Rejections, and the mirror class</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Corpus</th>
+<th>Rejection</th>
+<th>Level</th>
+<th>Could it change?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>R-06</strong></td>
+<td data-label="Corpus">Lending Club</td>
+<td data-label="Rejection">two mirrors, two licences (CC0 vs ODbL) for one upstream file</td>
+<td data-label="Level">licence</td>
+<td data-label="Could it change?">only via LendingClub's own grant</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-09</strong></td>
+<td data-label="Corpus">Give Me Some Credit</td>
+<td data-label="Rejection">five re-uploads, five licences (Unknown, CC0, Apache-2.0, MIT, World Bank)</td>
+<td data-label="Level">licence</td>
+<td data-label="Could it change?">only by reading the upstream competition terms</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>R-11</strong></td>
+<td data-label="Corpus">mirrors / re-uploads</td>
+<td data-label="Rejection">a label its publisher never granted</td>
+<td data-label="Level">origin</td>
+<td data-label="Could it change?">never — the origin corpus governs</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>R-11 is the class, not a row.</strong> Observed today and previously: MIT labels on ULB mirrors, CC0 on
+Lending Club, a bare <code>cc</code> on HELOC. Under the per-record gate a mirror is not a source at all, because
+the licence belongs to the corpus, not to the person who copied it. Ingesting one would attach a
+licence the publisher never issued <em>and</em> put the same rows on both sides of a split.</p>
+<p><strong>R-10 HMDA</strong> is the one rejection that is not about licensing: it is public US government data,
+freely usable, and still useless here — it records <strong>application outcomes</strong> (approved / denied), not
+performance, so there is no default label to learn. It is the wrong target variable.</p>
+<hr />
+<h2 id="6-track-c-the-pool-sliced">6. Track C — the pool, sliced</h2>
+<p>The Recipe's lesson: a rejected dataset is a set of slices, not a verdict. Polish bankruptcy is the
+only large admitted training pool, and slicing it changes the number that matters.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Horizon (years to bankruptcy)</th>
+<th style="text-align: right;">Rows</th>
+<th style="text-align: right;">Bankrupt</th>
+<th style="text-align: right;">Rate</th>
+<th style="text-align: right;">Missing cells</th>
+<th style="text-align: right;">Complete-case rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Horizon (years to bankruptcy)">5</td>
+<td style="text-align: right;" data-label="Rows">5,910</td>
+<td style="text-align: right;" data-label="Bankrupt">410</td>
+<td style="text-align: right;" data-label="Rate">6.94 %</td>
+<td style="text-align: right;" data-label="Missing cells">4,666</td>
+<td style="text-align: right;" data-label="Complete-case rows">3,031</td>
+</tr>
+<tr>
+<td data-label="Horizon (years to bankruptcy)">4</td>
+<td style="text-align: right;" data-label="Rows">9,792</td>
+<td style="text-align: right;" data-label="Bankrupt">515</td>
+<td style="text-align: right;" data-label="Rate">5.26 %</td>
+<td style="text-align: right;" data-label="Missing cells">8,776</td>
+<td style="text-align: right;" data-label="Complete-case rows">4,769</td>
+</tr>
+<tr>
+<td data-label="Horizon (years to bankruptcy)">3</td>
+<td style="text-align: right;" data-label="Rows">10,503</td>
+<td style="text-align: right;" data-label="Bankrupt">495</td>
+<td style="text-align: right;" data-label="Rate">4.71 %</td>
+<td style="text-align: right;" data-label="Missing cells">9,888</td>
+<td style="text-align: right;" data-label="Complete-case rows">4,885</td>
+</tr>
+<tr>
+<td data-label="Horizon (years to bankruptcy)">2</td>
+<td style="text-align: right;" data-label="Rows">10,173</td>
+<td style="text-align: right;" data-label="Bankrupt">400</td>
+<td style="text-align: right;" data-label="Rate">3.93 %</td>
+<td style="text-align: right;" data-label="Missing cells">12,157</td>
+<td style="text-align: right;" data-label="Complete-case rows">4,088</td>
+</tr>
+<tr>
+<td data-label="Horizon (years to bankruptcy)"><strong>1</strong></td>
+<td style="text-align: right;" data-label="Rows"><strong>7,027</strong></td>
+<td style="text-align: right;" data-label="Bankrupt"><strong>271</strong></td>
+<td style="text-align: right;" data-label="Rate"><strong>3.86 %</strong></td>
+<td style="text-align: right;" data-label="Missing cells">5,835</td>
+<td style="text-align: right;" data-label="Complete-case rows"><strong>3,194</strong></td>
+</tr>
+</tbody>
+</table></div>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Slice</th>
+<th style="text-align: right;">Rows</th>
+<th style="text-align: right;">Bankrupt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Slice">All rows</td>
+<td style="text-align: right;" data-label="Rows">43,405</td>
+<td style="text-align: right;" data-label="Bankrupt">2,091</td>
+</tr>
+<tr>
+<td data-label="Slice">Complete-case (no imputation)</td>
+<td style="text-align: right;" data-label="Rows">19,967</td>
+<td style="text-align: right;" data-label="Bankrupt">432</td>
+</tr>
+<tr>
+<td data-label="Slice"><strong>Horizon 1, complete-case</strong></td>
+<td style="text-align: right;" data-label="Rows"><strong>3,194</strong></td>
+<td style="text-align: right;" data-label="Bankrupt"><strong>30</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The 43,405-row corpus is a 3,194-row corpus with 30 bankruptcies</strong> once it is narrowed to one
+prediction target and rows a model can consume without imputation. Thirty positives is not a training
+set; it is a smoke test. The headline row count overstates the usable sample by roughly an order of
+magnitude, and the register now says so.</p>
+<p><strong>The limit this slice cannot test:</strong> there is no company identifier in the published file, so the same
+firm may appear in several horizons. Rows are not guaranteed independent, and a family split cannot be
+proven — the same defect the fraud lane found in ULB, in a different guise.</p>
+<hr />
+<h2 id="7-track-b-generated-data-and-why-it-cannot-carry-this-model">7. Track B — generated data, and why it cannot carry this model</h2>
+<p>The fraud lane can generate synthetic transactions and verify them by execution (a call executes, a
+ledger balances). Credit default has no execution semantics: nothing about a fabricated applicant can
+be <em>run</em> to prove it is a correct default. The recipe's Track B requires correctness by execution
+wherever the domain allows — here it does not allow it, and model judgement is explicitly not
+verification.</p>
+<p>So the honest position is a narrow one:</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Use of generated data</th>
+<th>Verdict</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Use of generated data">The PD <strong>target</strong> (fabricate defaulters)</td>
+<td data-label="Verdict"><strong>Refused</strong></td>
+<td data-label="Reason">no execution check exists; a synthetic probability cannot certify calibration</td>
+</tr>
+<tr>
+<td data-label="Use of generated data">Explanation / reason-code <strong>fixtures</strong></td>
+<td data-label="Verdict">Admissible with receipts</td>
+<td data-label="Reason">supervision is the fixture's own construction, not the model's opinion</td>
+</tr>
+<tr>
+<td data-label="Use of generated data">Missingness and serialisation <strong>stress fixtures</strong></td>
+<td data-label="Verdict">Admissible</td>
+<td data-label="Reason">the property asserted (an <code>NA</code> was injected) is provable by construction</td>
+</tr>
+<tr>
+<td data-label="Use of generated data">Additional real-shaped training rows</td>
+<td data-label="Verdict"><strong>Refused for v1</strong></td>
+<td data-label="Reason">a generator's bias becomes the model's prior, and there is no way to audit it here</td>
+</tr>
+</tbody>
+</table></div>
+<p>Any Track B row that is ever built carries <code>origin_class = GENERATED</code>, <code>generator</code>, <code>seed</code>,
+<code>source_material</code> and a <code>verification</code> receipt, and it can never be described as a published dataset —
+the same permanent-flag rule, pointed the other way.</p>
+<hr />
+<h2 id="8-per-record-provenance-the-stamp">8. Per-record provenance — the stamp</h2>
+<p>Frozen for this model, applied at ingest by the Phase 3 pipeline (not added later). It mirrors the
+fraud lane's stamp so one verifier can read both.</p>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Field"><code>row_id</code></td>
+<td data-label="Value"><code>cr-</code> + 9 digits, assigned in fixed source order then publisher row order</td>
+<td data-label="Why">stable identity across rebuilds</td>
+</tr>
+<tr>
+<td data-label="Field"><code>source_id</code></td>
+<td data-label="Value"><code>german_credit</code> · <code>taiwan_default</code> · <code>credit_approval</code> · <code>polish_bankruptcy</code> · <code>credit_risk_laotse</code></td>
+<td data-label="Why">names the upstream corpus — <strong>P1</strong></td>
+</tr>
+<tr>
+<td data-label="Field"><code>source_ref</code></td>
+<td data-label="Value">publisher URL</td>
+<td data-label="Why">the register row it belongs to</td>
+</tr>
+<tr>
+<td data-label="Field"><code>source_row_id</code></td>
+<td data-label="Value">pack <code>record_id</code></td>
+<td data-label="Why">traceable to <code>pack/curated/</code></td>
+</tr>
+<tr>
+<td data-label="Field"><code>source_row_index</code></td>
+<td data-label="Value">publisher row position</td>
+<td data-label="Why">the per-record locator</td>
+</tr>
+<tr>
+<td data-label="Field"><code>retrieved_at</code></td>
+<td data-label="Value">ingest timestamp (UTC)</td>
+<td data-label="Why">reproducibility</td>
+</tr>
+<tr>
+<td data-label="Field"><code>licence</code>, <code>licence_verdict</code></td>
+<td data-label="Value">copied from the register row</td>
+<td data-label="Why"><strong>P2</strong>, and it travels with the record</td>
+</tr>
+<tr>
+<td data-label="Field"><code>origin_class</code></td>
+<td data-label="Value"><code>DATASET_ROW</code> on every row; <code>GENERATED</code> only for Track B</td>
+<td data-label="Why">the permanent flag</td>
+</tr>
+<tr>
+<td data-label="Field"><code>synthetic</code></td>
+<td data-label="Value"><code>true</code> for R-08 and any generated row</td>
+<td data-label="Why">never described as real applications</td>
+</tr>
+<tr>
+<td data-label="Field"><code>benchmark_flag</code></td>
+<td data-label="Value"><code>true</code> where the row belongs to a frozen evaluation split</td>
+<td data-label="Why">keeps eval rows out of training</td>
+</tr>
+<tr>
+<td data-label="Field"><code>subset_label</code></td>
+<td data-label="Value"><code>forecast_horizon_years</code> for R-04</td>
+<td data-label="Why">a per-record category label, which counts as origin</td>
+</tr>
+<tr>
+<td data-label="Field"><code>row_sha256</code></td>
+<td data-label="Value">SHA-256 of the canonical token string</td>
+<td data-label="Why">the decontamination unit</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Worked example (R-04, horizon 1):</strong></p>
+<pre><code class="language-json">{&quot;row_id&quot;:&quot;cr-000042317&quot;,&quot;source_id&quot;:&quot;polish_bankruptcy&quot;,&quot;source_ref&quot;:&quot;https://archive.ics.uci.edu/dataset/365/polish+companies+bankruptcy+data&quot;,
+ &quot;source_row_id&quot;:&quot;polish_bankruptcy-042317&quot;,&quot;source_row_index&quot;:42317,&quot;retrieved_at&quot;:&quot;2026-11-11T18:20:00Z&quot;,
+ &quot;licence&quot;:&quot;CC BY 4.0&quot;,&quot;licence_verdict&quot;:&quot;ADMITTED&quot;,&quot;origin_class&quot;:&quot;DATASET_ROW&quot;,&quot;synthetic&quot;:false,
+ &quot;benchmark_flag&quot;:false,&quot;subset_label&quot;:{&quot;forecast_horizon_years&quot;:1},&quot;row_sha256&quot;:&quot;…&quot;}
+</code></pre>
+<p><strong>The rule that makes the stamp mean something:</strong> a record without a <code>source_id</code> that resolves to a
+register row with an <code>ADMITTED</code> verdict does not ship. <code>P1_SOURCE_NOT_ADMITTED</code> is a drop, not a
+warning.</p>
+<hr />
+<h2 id="9-coverage-against-the-phase-1-weakness-map">9. Coverage against the Phase 1 weakness map</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Weakness</th>
+<th>Covered by</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Weakness"><strong>W1</strong> thin-file discrimination</td>
+<td data-label="Covered by">R-05 (pending), R-08 (synthetic, weak)</td>
+<td data-label="State"><strong>gap</strong> — no real thin-file corpus admitted</td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W2</strong> recall at the operating point</td>
+<td data-label="Covered by">R-02 (eval only)</td>
+<td data-label="State">covered for measurement, <strong>not for training</strong></td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W3</strong> calibration in the upper band</td>
+<td data-label="Covered by">R-01, R-02</td>
+<td data-label="State">covered</td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W4</strong> repayment-status dependence</td>
+<td data-label="Covered by">R-02 (measured, structural)</td>
+<td data-label="State">covered — a scoping fact, not a data need</td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W5</strong> missing-data robustness</td>
+<td data-label="Covered by"><strong>R-08</strong> (9.56 % missing), R-04 (41,322 cells)</td>
+<td data-label="State"><strong>covered</strong></td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W6</strong> explanation fidelity</td>
+<td data-label="Covered by">R-07 (pending terms)</td>
+<td data-label="State"><strong>gap</strong></td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W7</strong> fair lending</td>
+<td data-label="Covered by">R-01, R-02</td>
+<td data-label="State">covered (diagnostic)</td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W8</strong> out-of-time stability</td>
+<td data-label="Covered by">R-06 (rejected), R-05 (pending)</td>
+<td data-label="State"><strong>gap</strong></td>
+</tr>
+<tr>
+<td data-label="Weakness"><strong>W9</strong> the base battery</td>
+<td data-label="Covered by">R-01, R-02</td>
+<td data-label="State">covered</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Three gaps, one cause.</strong> W1, W6 and W8 need corpora this lane does not have: a real thin-file
+population, an explanation benchmark, and a dated portfolio. None of them is a training-mixture
+problem; all three are acquisition problems, and every one has a named candidate with a named blocker.</p>
+<hr />
+<h2 id="10-decision-rows">10. Decision rows</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Decision</th>
+<th>Options</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="ID"><strong>D-R11</strong></td>
+<td data-label="Decision">Benchmark/training allocation</td>
+<td data-label="Options">A: keep both eval-only, source new training data · B: re-scope Taiwan to a single 80/20 holdout (MDE 0.014 → 0.030) · C: zero-shot only this cycle</td>
+<td data-label="Recommendation"><strong>C now</strong>, then A vs B after the base row shows skill</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R12</strong></td>
+<td data-label="Decision">Ingest R-08 (CC0, synthetic) as a training corpus?</td>
+<td data-label="Options">yes, flagged · no</td>
+<td data-label="Recommendation"><strong>Yes</strong>, narrow: W5 substrate and robustness only, <code>synthetic = true</code>, never a headline row</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R13</strong></td>
+<td data-label="Decision">Accept the Kaggle rules for Home Credit?</td>
+<td data-label="Options">yes · no</td>
+<td data-label="Recommendation"><strong>Yes</strong> — it is the only candidate that closes W1, W2 and W8 at once</td>
+</tr>
+<tr>
+<td data-label="ID"><strong>D-R14</strong></td>
+<td data-label="Decision">Track B policy</td>
+<td data-label="Options">PD refused · fixtures only · none</td>
+<td data-label="Recommendation"><strong>Fixtures only</strong> (§7)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="11-blockers">11. Blockers</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Blocker</th>
+<th>Owner</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="#"><strong>R-05</strong></td>
+<td data-label="Blocker">Home Credit rules unaccepted (401 today)</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect">No real large training corpus; W1, W2, W8 stay open</td>
+</tr>
+<tr>
+<td data-label="#"><strong>R-06</strong></td>
+<td data-label="Blocker">HELOC terms unread (bare <code>cc</code>)</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect">W6 and A5 — the explanation duty — cannot be measured</td>
+</tr>
+<tr>
+<td data-label="#"><strong>B-5</strong></td>
+<td data-label="Blocker">No GPU access</td>
+<td data-label="Owner">Sandeep</td>
+<td data-label="Effect">The base row, and therefore D-R11's evidence, is unavailable</td>
+</tr>
+<tr>
+<td data-label="#"><strong>B-7</strong></td>
+<td data-label="Blocker">No second agent, different family</td>
+<td data-label="Owner">Ronin</td>
+<td data-label="Effect">Phase 4 verification unassigned</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="12-receipts-and-reproduction">12. Receipts and reproduction</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Artefact</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Artefact"><a href="phase2-risk/register.json"><code>phase2-risk/register.json</code></a></td>
+<td data-label="What it proves">11 sources, verdicts, licence evidence, roles and coverage</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase2-risk/out/gate_report.json"><code>phase2-risk/out/gate_report.json</code></a></td>
+<td data-label="What it proves">P1/P2/P3 executed against the bytes; training-eligible rows computed from roles</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase2-risk/out/candidate_laotse.json"><code>phase2-risk/out/candidate_laotse.json</code></a></td>
+<td data-label="What it proves">R-08 licence at source, hashes, missingness, impossible values</td>
+</tr>
+<tr>
+<td data-label="Artefact"><a href="phase2-risk/out/slices_polish.json"><code>phase2-risk/out/slices_polish.json</code></a></td>
+<td data-label="What it proves">the per-horizon and complete-case slice arithmetic</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code class="language-bash">cd credit
+export PYTHONPATH=$PWD/.pylibs
+python3 phase2-risk/gate.py              # executes the gate over the register and the pack
+python3 phase2-risk/slices.py            # Polish horizon / complete-case slices
+python3 phase2-risk/inspect_candidate.py # re-downloads and re-inspects R-08 (network)
+</code></pre>
+<p>The CSV that <code>inspect_candidate.py</code> fetches is git-ignored: the receipt is the artefact, not the data.</p>
+<hr />
+<h2 id="13-recipe-conformance">13. Recipe conformance</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Recipe clause</th>
+<th>Where it is satisfied</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Recipe clause">Public datasets only, predicate-tested first</td>
+<td data-label="Where it is satisfied">§1–§3 — three predicates executed by <code>gate.py</code></td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Licence entry per corpus, evidence quoted</td>
+<td data-label="Where it is satisfied">§3, register <code>licence_evidence</code> + <code>licence_checked_at</code></td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Per-record provenance, applied at ingest</td>
+<td data-label="Where it is satisfied">§8 — the frozen stamp, with a worked example</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Subset/category labels count as origin</td>
+<td data-label="Where it is satisfied">§8 <code>subset_label</code> (Polish horizon)</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Dataset-level licence does not count</td>
+<td data-label="Where it is satisfied">§5 — the mirror class rejected on exactly this ground</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Published datasets permanently flagged</td>
+<td data-label="Where it is satisfied">§7 — <code>origin_class = DATASET_ROW</code> on every record, synthetic flagged separately</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Generated data: provenance by construction, correctness by execution</td>
+<td data-label="Where it is satisfied">§7 — and the honest statement that credit has no execution check, so the PD channel refuses synthetic supervision</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Coverage judged against the weakness map</td>
+<td data-label="Where it is satisfied">§9 — three named gaps</td>
+</tr>
+<tr>
+<td data-label="Recipe clause">Rejected corpus is a set of slices</td>
+<td data-label="Where it is satisfied">§6 — Polish sliced from 43,405 to 3,194 rows / 30 positives</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>One departure, named.</strong> The fraud lane's Phase 2 could assume every admitted corpus was trainable.
+This packet adds a <code>role</code> dimension and reserves two admitted corpora for evaluation. That is stricter,
+not looser: it refuses to spend the only measuring instruments on training data.</p>
+<hr />
+<h2 id="14-revision-history">14. Revision history</h2>
+<div class="tbl-wrap"><table>
+<thead>
+<tr>
+<th>Rev</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Rev">1</td>
+<td data-label="Date">2026-11-11</td>
+<td data-label="Change">First Phase 2 packet for Model 2: 11-source register, executed gate, benchmark/training separation, R-08 admission with synthetic flags, Polish slice arithmetic</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p><em>No corpus was built. No row was ingested. No training was started. The register's verdicts are about
+licences and roles, not about quality; the one number this phase produces that a reader should carry
+is zero — the count of evidence-grade consumer-PD rows available for training today.</em></p>
+  <div class="footer">
+    <p><strong>Document provenance.</strong> Credit Risk Phase 2 packet, rev. 1, 11 November 2026,
+    CREDIT lane. Written from the consolidated Recipe v1 Phase 2 text, the pack's licence receipts, the
+    Phase 1 weakness map, and three scripts in <code>phase2-risk/</code> (<code>gate.py</code>,
+    <code>slices.py</code>, <code>inspect_candidate.py</code>). Licence evidence was re-read at source on
+    the day of issue; where it could not be read, the verdict says so.</p>
+    <p><strong>Revisions are recorded, never silently overwritten.</strong> No corpus was built and no
+    row was ingested. The register's verdicts are about licences and roles, not quality; the one number
+    to carry is zero — the count of evidence-grade consumer-PD rows available for training today.
+    D-R11…D-R14, B-5, B-7, R-05 and R-06 remain open. The HTML edition is generated from the markdown by
+    <code>build_phase2_risk_guide.py</code>.</p>
+    <p class="up">CREDIT · Model 2 · Phase 2 · AITIUM INC</p>
+  </div>
+  </main>
+</div>
+</div>
+</body>
+</html>
